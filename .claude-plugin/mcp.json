@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fabler-x402-tools": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.js"]
+    }
+  }
+}

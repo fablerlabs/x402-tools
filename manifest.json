@@ -1,0 +1,51 @@
+{
+  "manifest_version": "0.3",
+  "name": "fabler-x402-tools",
+  "display_name": "Fabler x402 Tools",
+  "version": "1.0.0",
+  "description": "Paid agent tools (secret scanning, agent-config audit, OG image rendering) billed per call over x402 on Base, plus a free product catalog.",
+  "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, and fabler_render_og as paid per-call tools settled in USDC on Base via the x402 protocol (HTTP 402 Payment Required), plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
+  "author": { "name": "Fabler Labs", "url": "https://fablerlabs.com" },
+  "repository": { "type": "git", "url": "https://github.com/fablerlabs/x402-tools.git" },
+  "homepage": "https://github.com/fablerlabs/x402-tools",
+  "documentation": "https://github.com/fablerlabs/x402-tools#readme",
+  "support": "https://github.com/fablerlabs/x402-tools/issues",
+  "license": "MIT",
+  "keywords": ["x402", "payments", "ai-agents", "usdc", "base", "mcp"],
+  "server": {
+    "type": "node",
+    "entry_point": "mcp/server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/mcp/server.js"],
+      "env": {
+        "X402_BASE_URL": "${user_config.x402_base_url}",
+        "X402_BUYER_PRIVATE_KEY": "${user_config.x402_buyer_private_key}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "fabler_list_products", "description": "List Fabler Labs' x402 products with their current per-call USDC price (free)" },
+    { "name": "fabler_scan_secrets", "description": "Scan text for leaked API keys/secrets/tokens (paid)" },
+    { "name": "fabler_audit_agent_config", "description": "Audit a CLAUDE.md/AGENTS.md/CONSTITUTION.md against agent-config best practices (paid)" },
+    { "name": "fabler_render_og", "description": "Render a branded 1200x630 OG/social-card image (paid)" }
+  ],
+  "user_config": {
+    "x402_base_url": {
+      "type": "string",
+      "title": "x402 API base URL",
+      "description": "Override the x402 API base URL — leave blank to use the default (https://x402.fablerlabs.com)",
+      "required": false
+    },
+    "x402_buyer_private_key": {
+      "type": "string",
+      "title": "Buyer wallet private key (optional)",
+      "description": "YOUR OWN EVM wallet private key, used only to auto-pay x402 402 challenges. Never Fabler Labs'. Leave blank to receive the raw 402 challenge instead of automatic payment.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "runtimes": { "node": ">=18" }
+  }
+}

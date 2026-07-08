@@ -1,0 +1,12 @@
+{
+  "//": "Fabler x402 Tools MCP server — stdio transport, speaks directly to https://x402.fablerlabs.com. Add this block to your MCP client config (Claude Code: .mcp.json at your project root; Claude Desktop: claude_desktop_config.json). X402_BUYER_PRIVATE_KEY is YOUR OWN wallet key, used only to auto-pay 402 challenges — never Fabler Labs'. Omit it entirely to get the raw 402 challenge back instead and pay it through your own rails.",
+  "mcpServers": {
+    "fabler-x402-tools": {
+      "command": "npx",
+      "args": ["-y", "github:fablerlabs/x402-tools"],
+      "env": {
+        "X402_BUYER_PRIVATE_KEY": "${X402_BUYER_PRIVATE_KEY}"
+      }
+    }
+  }
+}

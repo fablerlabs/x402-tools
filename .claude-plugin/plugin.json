@@ -1,0 +1,16 @@
+{
+  "name": "fabler-x402-tools",
+  "displayName": "Fabler x402 Tools",
+  "version": "1.0.0",
+  "description": "Paid agent tools (secret scanning, agent-config audit, OG rendering) billed per call over x402 on Base, plus a free product catalog. No account needed — set X402_BUYER_PRIVATE_KEY to auto-pay, or omit it to get raw 402 challenges.",
+  "author": {
+    "name": "Fabler Labs",
+    "email": "github@fablerlabs.com",
+    "url": "https://github.com/fablerlabs"
+  },
+  "homepage": "https://github.com/fablerlabs/x402-tools",
+  "repository": "https://github.com/fablerlabs/x402-tools",
+  "license": "MIT",
+  "keywords": ["x402", "payments", "ai-agents", "usdc", "base", "mcp"],
+  "mcpServers": "./.claude-plugin/mcp.json"
+}
