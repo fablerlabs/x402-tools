@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "fabler-x402-tools",
   "display_name": "Fabler x402 Tools",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Paid agent tools (secret scanning, agent-config and diff-security audits, OG rendering) billed per call over x402 on Base, plus a free product catalog.",
   "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, fabler_audit_diff_security, and fabler_render_og as paid per-call tools settled in USDC on Base via the x402 protocol (HTTP 402 Payment Required), plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
   "author": { "name": "Fabler Labs", "url": "https://fablerlabs.com" },

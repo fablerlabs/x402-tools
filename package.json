@@ -1,6 +1,6 @@
 {
   "name": "fabler-x402-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for Fabler Labs' paid x402 tools (secret scanning, agent-config and diff-security audits, OG rendering) plus a free product catalog",
   "bin": {
     "fabler-x402-mcp": "mcp/server.js"
@@ -10,7 +10,9 @@
   },
   "type": "commonjs",
   "scripts": {
-    "test": "node mcp/test/mcp-smoke.mjs && node mcp/test/request-shapes.test.mjs && node examples/buyer-sim/buyer.mjs --mock"
+    "build:mcpb": "bash mcp/build-mcpb.sh",
+    "test": "node mcp/test/mcp-smoke.mjs && node mcp/test/request-shapes.test.mjs && node examples/buyer-sim/buyer.mjs --mock && npm run test:mcpb",
+    "test:mcpb": "npm run build:mcpb && node mcp/test/mcpb-smoke.mjs"
   },
   "optionalDependencies": {
     "@x402/evm": "^2.17.0",
@@ -30,5 +32,8 @@
     "ai-agents"
   ],
   "author": "Fabler Labs",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  }
 }

@@ -66,7 +66,8 @@ npm install
 Build (or download from a [release](https://github.com/fablerlabs/x402-tools/releases))
 `dist/fabler-x402-tools.mcpb` via `bash mcp/build-mcpb.sh`, then drag it into
 Claude Desktop's extensions settings. Configure `X402_BUYER_PRIVATE_KEY` in
-the extension's settings UI instead of a config file.
+the extension's settings UI instead of a config file. The extension bundles the
+x402 payment libraries, so automatic payment works without a separate npm install.
 
 `X402_BUYER_PRIVATE_KEY` is **optional** in every install path — omit it
 entirely if you'd rather pay challenges through your own x402-capable rails
@@ -89,17 +90,16 @@ This remote server is listed in the official MCP Registry as
 `com.fablerlabs/x402-tools`. It exposes only the free `fabler_list_products`
 catalog; use options 1-3 for the paid tools.
 
-To let this server **pay automatically** instead of just reporting the
-payment challenge, also install the optional x402 payment peers alongside
-it:
+Normal npm and `npx github:...` installs include the optional x402 payment
+dependencies. If they were explicitly omitted, install them before enabling
+automatic payment:
 
 ```bash
 npm install @x402/fetch @x402/evm viem
 ```
 
-These packages are declared as optional dependencies, so normal `npm` and
-`npx github:...` installs include them unless optional dependencies are explicitly
-omitted.
+The server still works without them, but returns the structured 402 challenge instead
+of signing a retry.
 
 ## Payment flow
 
@@ -119,7 +119,7 @@ testing against a staging deploy).
   challenge through any x402-capable wallet/rails and retry the call.
 
 See [`snippets/`](snippets/) for three ways to pay a challenge by hand
-(curl + a signer, Node + `x402-fetch`, Python + `eth-account`), and
+(curl + a signer, Node + `@x402/fetch`, Python + `eth-account`), and
 [`examples/buyer-sim/`](examples/buyer-sim/) for a full offline
 challenge→pay→retry→verify harness you can run without spending anything.
 
@@ -154,14 +154,12 @@ willing to transmit off-machine. Full policy in
   authentication on `fablerlabs.com`. Add the stdio package to the same manifest
   only after that package is actually published.
 - **Claude Desktop extension** — `bash mcp/build-mcpb.sh` builds
-  `dist/fabler-x402-tools.mcpb` from [`manifest.json`](manifest.json) +
-  `mcp/server.js` + `mcp/tools.js` + `LICENSE`, for a GitHub release asset.
+  `dist/fabler-x402-tools.mcpb` from [`manifest.json`](manifest.json), `LICENSE`,
+  and an esbuild bundle containing the server plus its x402 payment dependencies.
   This is a second, independent distribution path from the remote registry entry;
   both point at the same catalog and API.
 - **Claude Code plugin** — [`.claude-plugin/`](.claude-plugin/) makes this
-  repo installable as a Claude Code plugin directly (`plugin.json` +
-  `mcp.json`), the same pattern as
-  [fablerlabs/relay](https://github.com/fablerlabs/relay).
+  repo installable as a Claude Code plugin directly (`plugin.json` + `mcp.json`).
 
 ## Dev / test
 
@@ -175,7 +173,9 @@ Runs `mcp/test/mcp-smoke.mjs` (spawns `mcp/server.js`, performs a real
 present with a `description` and `inputSchema` — no network, no env vars)
 followed by `examples/buyer-sim/buyer.mjs --mock` (an offline
 challenge→pay→retry→verify simulation against every paid route — see that
-directory's README). Neither test calls the real API or needs a wallet.
+directory's README). It also builds the `.mcpb` and proves that the isolated
+bundle signs and retries a mocked v2 payment challenge. No test calls the real
+API or needs a funded wallet.
 
 ## Links
 

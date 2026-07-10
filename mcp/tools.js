@@ -7,13 +7,13 @@
 //   X402_BASE_URL           https://x402.fablerlabs.com  (override for testing)
 //   X402_BUYER_PRIVATE_KEY  YOUR OWN EVM wallet private key, used only to
 //                            auto-pay x402 402 challenges via the optional
-//                            x402-fetch + viem packages. Never Fabler Labs'
+//                            @x402/fetch + @x402/evm + viem packages. Never Fabler Labs'
 //                            key. NEVER logged, echoed, or included in any
 //                            error message or tool result — see redact().
 //
 // Payment flow: every paid tool call hits a Fabler x402 endpoint. If
-// X402_BUYER_PRIVATE_KEY is set AND the optional peer packages `x402-fetch`
-// and `viem` are installed alongside this server, the request auto-pays a
+// X402_BUYER_PRIVATE_KEY is set AND the optional payment dependencies are
+// installed alongside this server, the request auto-pays a
 // 402 challenge on Base and retries. Otherwise (no key, or peers missing)
 // a bare 402 response is parsed and returned as structured content so the
 // calling agent can pay through its own x402-capable rails and retry. The
@@ -23,7 +23,7 @@
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.2" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.3" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
 
 function x402Base() {
@@ -34,10 +34,13 @@ function buyerKey() {
   return (process.env.X402_BUYER_PRIVATE_KEY || "").trim();
 }
 
-function tryRequire(name) {
+function loadPaymentDependencies() {
   try {
-    // eslint-disable-next-line global-require
-    return require(name);
+    return {
+      x402Fetch: require("@x402/fetch"),
+      x402Evm: require("@x402/evm"),
+      viemAccounts: require("viem/accounts"),
+    };
   } catch {
     return null;
   }
@@ -55,20 +58,18 @@ function redactedPaymentError() {
 }
 
 // Returns a fetch function wrapped to auto-pay x402 challenges, or null when
-// no wallet key is set or the optional peer packages aren't installed (in
+// no wallet key is set or the optional payment dependencies aren't installed (in
 // which case callers fall back to plain fetch and surface the 402 challenge).
 async function getPayingFetch() {
   const key = buyerKey();
   if (!key) return null;
-  const x402Fetch = tryRequire("@x402/fetch");
-  const x402Evm = tryRequire("@x402/evm");
-  const viemAccounts = tryRequire("viem/accounts");
-  if (!x402Fetch || !x402Evm || !viemAccounts) return null;
+  const deps = loadPaymentDependencies();
+  if (!deps) return null;
   try {
     const normalized = key.startsWith("0x") ? key : `0x${key}`;
-    const account = viemAccounts.privateKeyToAccount(normalized);
-    return x402Fetch.wrapFetchWithPaymentFromConfig(fetch, {
-      schemes: [{ network: "eip155:8453", client: new x402Evm.ExactEvmScheme(account) }],
+    const account = deps.viemAccounts.privateKeyToAccount(normalized);
+    return deps.x402Fetch.wrapFetchWithPaymentFromConfig(fetch, {
+      schemes: [{ network: "eip155:8453", client: new deps.x402Evm.ExactEvmScheme(account) }],
     });
   } catch {
     throw redactedPaymentError();

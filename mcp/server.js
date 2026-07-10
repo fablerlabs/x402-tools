@@ -3,8 +3,9 @@
 // Desktop, ...) call Fabler Labs' paid x402 tools (secret scanning, agent
 // config audits, OG card rendering) plus the free product catalog.
 // Zero required dependencies: speaks MCP's stdio transport (newline-delimited
-// JSON-RPC) directly. Node 18+ (global fetch). Optional peers `x402-fetch`
-// and `viem` enable automatic on-chain payment — see README.md.
+// JSON-RPC) directly. Node 18+ (global fetch). Optional dependencies
+// `@x402/fetch`, `@x402/evm`, and `viem` enable automatic on-chain payment —
+// see README.md.
 //
 // Tool definitions + JSON-RPC handling live in ./tools.js.
 //
