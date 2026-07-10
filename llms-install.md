@@ -6,13 +6,15 @@ step has a verification check.
 
 ## What you are installing
 
-A zero-required-dependency MCP stdio server (Node 18+) exposing four tools:
+A zero-required-dependency MCP stdio server (Node 18+) exposing six tools:
 
 | Tool | Cost | What it does |
 |---|---|---|
 | `fabler_list_products` | free | List current products and their per-call USDC price. |
 | `fabler_scan_secrets` | paid | Scan text for leaked API keys/secrets/tokens. |
 | `fabler_audit_agent_config` | paid | Audit a CLAUDE.md/AGENTS.md/CONSTITUTION.md; returns a score + findings. |
+| `fabler_audit_diff_security` | paid | Scan a unified diff for leaked secrets and high-signal security patterns. |
+| `fabler_audit_pre_deploy` | paid | Validate an 18-point release record for missing, failed, or evidence-free checks. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image. |
 
 The server talks to `https://x402.fablerlabs.com`, a live, already-deployed
@@ -65,18 +67,16 @@ Alternatives that behave identically:
   Desktop's extension settings — configure the wallet key in its settings UI
   instead of a JSON file.
 
-## Step 2 — Auto-pay only: install the optional payment peers
+## Step 2 — Auto-pay only: confirm the payment dependencies
 
-Skip this step entirely if the user chose "just receive challenges" in Step 0.
+The GitHub package installs its optional payment dependencies by default, so no
+extra command is normally required. If it was installed with `--omit=optional`,
+use a local checkout and install the peers before enabling automatic payment:
 
 ```bash
 git clone https://github.com/fablerlabs/x402-tools && cd x402-tools
-npm install x402-fetch viem
+npm install @x402/fetch @x402/evm viem
 ```
-
-Then point the MCP config's `command`/`args` at this checkout's
-`mcp/server.js` (a plain `npx github:...` install has nowhere to
-`npm install` optional peers into).
 
 ## Step 3 — Verify
 
@@ -89,7 +89,7 @@ Then point the MCP config's `command`/`args` at this checkout's
      | npx -y github:fablerlabs/x402-tools
    ```
 
-   Expect two JSON-RPC responses; the second lists all four `fabler_*` tools.
+   Expect two JSON-RPC responses; the second lists all six `fabler_*` tools.
 
 2. End-to-end, no wallet needed: call `fabler_list_products` from the MCP
    client. It's free and hits the live catalog — a non-empty product list is
