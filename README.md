@@ -28,6 +28,21 @@ not hardcoded here so this README can't go stale. See
 overview, or `GET https://x402.fablerlabs.com/` for the machine-readable
 catalog these tools call under the hood.
 
+### Low-ticket download
+
+The same catalog also exposes an x402-only product for agents that need a review
+artifact rather than an API result:
+
+```text
+GET https://x402.fablerlabs.com/buy/pre-deploy-security-checklist
+$0.10 USDC on Base -> pre-deploy-security-checklist.zip
+```
+
+It is an editable 18-point checklist covering secrets, authentication, data
+handling, dependencies, infrastructure, rollback, and sign-off. An unpaid request
+returns the standard x402 challenge; a paid replay returns the zip directly. This
+download is not an MCP tool and does not require this client.
+
 ## Install
 
 Four ways to use these tools — options 1-3 expose all five tools; option 4 is
