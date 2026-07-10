@@ -30,7 +30,7 @@ catalog these tools call under the hood.
 
 ### Low-ticket download
 
-The same catalog also exposes an x402-only product for agents that need a review
+The same catalog also exposes a low-ticket product for agents that need a review
 artifact rather than an API result:
 
 ```text
@@ -41,7 +41,8 @@ $0.10 USDC on Base -> pre-deploy-security-checklist.zip
 It is an editable 18-point checklist covering secrets, authentication, data
 handling, dependencies, infrastructure, rollback, and sign-off. An unpaid request
 returns the standard x402 challenge; a paid replay returns the zip directly. This
-download is not an MCP tool and does not require this client.
+download is not an MCP tool and does not require this client. A `$1` card checkout
+for human buyers is available at [fablerlabs.com/checklist](https://fablerlabs.com/checklist).
 
 ## Install
 
