@@ -1,7 +1,7 @@
 {
   "name": "fabler-x402-mcp",
-  "version": "1.0.4",
-  "description": "MCP server for Fabler Labs' paid x402 tools (secret scanning, agent-config and diff-security audits, OG rendering) plus a free product catalog",
+  "version": "1.0.5",
+  "description": "MCP server for Fabler Labs' paid x402 security tools and OG rendering plus a free product catalog",
   "bin": {
     "fabler-x402-mcp": "mcp/server.js"
   },

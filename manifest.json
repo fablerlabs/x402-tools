@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "fabler-x402-tools",
   "display_name": "Fabler x402 Tools",
-  "version": "1.0.4",
-  "description": "Paid agent tools (secret scanning, agent-config, diff-security and pre-deploy audits, OG rendering) billed per call over x402 on Base, plus a free product catalog.",
-  "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, fabler_audit_diff_security, fabler_audit_pre_deploy, and fabler_render_og as paid per-call tools settled in USDC on Base via the x402 protocol (HTTP 402 Payment Required), plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
+  "version": "1.0.5",
+  "description": "Paid tools for secrets, agent configs, diffs, deploy evidence, public URL security, and OG rendering over x402 on Base, plus a free catalog.",
+  "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, fabler_audit_diff_security, fabler_audit_pre_deploy, fabler_audit_url_security, and fabler_render_og as paid per-call tools settled in USDC on Base via HTTP 402, plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
   "author": { "name": "Fabler Labs", "url": "https://fablerlabs.com" },
   "repository": { "type": "git", "url": "https://github.com/fablerlabs/x402-tools.git" },
   "homepage": "https://github.com/fablerlabs/x402-tools",
@@ -30,6 +30,7 @@
     { "name": "fabler_audit_agent_config", "description": "Audit a CLAUDE.md/AGENTS.md/CONSTITUTION.md against agent-config best practices (paid)" },
     { "name": "fabler_audit_diff_security", "description": "Scan a unified diff for secrets and security patterns; return a pass/block verdict (paid)" },
     { "name": "fabler_audit_pre_deploy", "description": "Validate an 18-point release evidence record and return a ready/blocked verdict (paid)" },
+    { "name": "fabler_audit_url_security", "description": "Snapshot public HTTPS status, redirects, security headers, and cookie flags without retaining body content (paid)" },
     { "name": "fabler_render_og", "description": "Render a branded 1200x630 OG/social-card image (paid)" }
   ],
   "user_config": {

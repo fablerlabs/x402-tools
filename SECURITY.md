@@ -23,6 +23,7 @@ do not open a public issue for anything exploitable.
   a dedicated low-balance wallet over your main one. It is read from the
   environment only at call time and is never logged, echoed, or included in
   any tool result or error message — see `mcp/tools.js`'s `redactedPaymentError()`.
-- `fabler_scan_secrets` and `fabler_audit_agent_config` send the `text` /
-  `content` you pass as an argument to the Fabler x402 API for processing.
-  Don't pass data you're not willing to transmit off-machine.
+- The paid tools send their arguments to the Fabler x402 API for processing.
+  `fabler_audit_url_security` fetches the public HTTPS target you provide but
+  does not retain response-body content. Don't pass data or targets you're not
+  willing to transmit off-machine.

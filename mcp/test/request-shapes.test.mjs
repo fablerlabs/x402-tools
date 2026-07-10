@@ -10,6 +10,7 @@
 //   AuditRequest        required: [content, kind]           (kind enum: "CLAUDE.md" | "constitution")
 //   DiffSecurityRequest required: [diff]
 //   PreDeployRequest   required: [results]
+//   UrlSecurityRequest required: [url]
 //   RenderOgRequest     required: [title]  optional: subtitle, theme
 //   GET /                                  free catalog (not /products.json)
 // Guards against regressing the 3 field/route bugs q142 found (fabler_list_products
@@ -117,6 +118,30 @@ await checkAsync("fabler_audit_pre_deploy rejects duplicate ids before fetch", a
   const result = { id: "secrets-scanned", status: "pass", evidence: "CI run 842" };
   await assert.rejects(() => tools.callTool("fabler_audit_pre_deploy", { results: [result, result] }), /duplicate/);
   assert.equal(calls.length, 0);
+});
+
+await checkAsync("fabler_audit_url_security sends POST /audit/url-security {url}", async () => {
+  const calls = installRecordingFetch();
+  await tools.callTool("fabler_audit_url_security", { url: "https://Example.com/security?q=1" });
+  assert.equal(calls.length, 1);
+  assert.equal(new URL(calls[0].url).pathname, "/audit/url-security");
+  assert.equal(calls[0].method, "POST");
+  assert.deepEqual(calls[0].body, { url: "https://example.com/security?q=1" });
+});
+
+await checkAsync("fabler_audit_url_security rejects unsafe URLs before fetch", async () => {
+  for (const url of [
+    "http://example.com",
+    "https://127.0.0.1/admin",
+    "https://metadata.internal/latest",
+    "https://user:pass@example.com/",
+    "https://example.com:8443/",
+    "https://example.com/#fragment",
+  ]) {
+    const calls = installRecordingFetch();
+    await assert.rejects(() => tools.callTool("fabler_audit_url_security", { url }));
+    assert.equal(calls.length, 0, `unsafe URL must fail before fetch: ${url}`);
+  }
 });
 
 await checkAsync(

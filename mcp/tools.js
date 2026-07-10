@@ -23,7 +23,7 @@
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.4" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.5" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
 const RELEASE_CHECK_IDS = [
   "secrets-scanned",
@@ -46,6 +46,17 @@ const RELEASE_CHECK_IDS = [
   "residual-risk-owners",
 ];
 const RELEASE_CHECK_ID_SET = new Set(RELEASE_CHECK_IDS);
+const BLOCKED_URL_HOST_SUFFIXES = [
+  ".localhost",
+  ".local",
+  ".internal",
+  ".home",
+  ".lan",
+  ".test",
+  ".example",
+  ".invalid",
+  ".onion",
+];
 
 function x402Base() {
   return (process.env.X402_BASE_URL || "https://x402.fablerlabs.com").replace(/\/+$/, "");
@@ -189,6 +200,28 @@ const TOOLS = [
     },
   },
   {
+    name: "fabler_audit_url_security",
+    description:
+      "Create a bounded response-metadata snapshot for a public HTTPS URL: status, validated " +
+      "redirects, HSTS, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and " +
+      "cookie flags. The service does not retain response-body content and is not a vulnerability " +
+      "scan or TLS-certificate audit. Paid x402 tool billed in USDC on Base - call " +
+      "fabler_list_products first for the current per-call price.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        url: {
+          type: "string",
+          format: "uri",
+          maxLength: 2048,
+          description: "Public HTTPS URL using the default port, without credentials or a fragment",
+        },
+      },
+      required: ["url"],
+    },
+  },
+  {
     name: "fabler_render_og",
     description:
       "Render a branded 1200x630 OG/social-card image (PNG, or SVG if the raster step falls back) " +
@@ -314,6 +347,38 @@ function requireNonEmptyText(value, field) {
   return text;
 }
 
+function requirePublicHttpsUrl(value) {
+  if (typeof value !== "string" || value.length < 1 || value.length > 2048) {
+    throw new Error("url is required and must contain 1-2048 characters");
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("url must be a valid absolute HTTPS URL");
+  }
+  if (url.protocol !== "https:") throw new Error("url must use HTTPS");
+  if (url.username || url.password) throw new Error("url must not contain credentials");
+  if (url.port && url.port !== "443") throw new Error("url must use the default HTTPS port");
+  if (url.hash) throw new Error("url must not contain a fragment");
+
+  const host = url.hostname.toLowerCase();
+  const labels = host.split(".");
+  if (
+    host === "localhost" ||
+    host.endsWith(".") ||
+    !host.includes(".") ||
+    host.includes(":") ||
+    /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) ||
+    BLOCKED_URL_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix)) ||
+    host.length > 253 ||
+    labels.some((label) => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))
+  ) {
+    throw new Error("url host must be a public DNS name");
+  }
+  return url.toString();
+}
+
 function requireReleaseResults(value) {
   if (!Array.isArray(value) || value.length < 1 || value.length > RELEASE_CHECK_IDS.length) {
     throw new Error(`results is required and must contain 1-${RELEASE_CHECK_IDS.length} checklist records`);
@@ -360,6 +425,14 @@ async function callTool(name, args) {
     const results = requireReleaseResults(args.results);
     return JSON.stringify(
       await callApi("/audit/pre-deploy", { method: "POST", body: { results } }),
+      null,
+      2,
+    );
+  }
+  if (name === "fabler_audit_url_security") {
+    const url = requirePublicHttpsUrl(args.url);
+    return JSON.stringify(
+      await callApi("/audit/url-security", { method: "POST", body: { url } }),
       null,
       2,
     );

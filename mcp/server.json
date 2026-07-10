@@ -3,7 +3,7 @@
   "name": "com.fablerlabs/x402-tools",
   "title": "Fabler x402 Tools",
   "description": "Free catalog and 2,048-character secret-scan preview for Fabler's x402 agent tools on Base.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "websiteUrl": "https://github.com/fablerlabs/x402-tools",
   "repository": {
     "url": "https://github.com/fablerlabs/x402-tools",
