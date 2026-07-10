@@ -23,8 +23,29 @@
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.3" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.4" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
+const RELEASE_CHECK_IDS = [
+  "secrets-scanned",
+  "env-history-clean",
+  "production-debug-off",
+  "default-credentials-changed",
+  "cors-origin-allowlist",
+  "mutating-authz",
+  "secure-credential-hashing",
+  "session-cookie-flags",
+  "auth-rate-limits",
+  "parameterized-queries",
+  "output-sanitization",
+  "upload-bounds",
+  "dependency-audit",
+  "dependency-maintenance",
+  "infrastructure-least-access",
+  "deploy-credential-scope",
+  "rollback-ready",
+  "residual-risk-owners",
+];
+const RELEASE_CHECK_ID_SET = new Set(RELEASE_CHECK_IDS);
 
 function x402Base() {
   return (process.env.X402_BASE_URL || "https://x402.fablerlabs.com").replace(/\/+$/, "");
@@ -132,6 +153,39 @@ const TOOLS = [
         },
       },
       required: ["diff"],
+    },
+  },
+  {
+    name: "fabler_audit_pre_deploy",
+    description:
+      "Validate an 18-point pre-deploy review record and return missing checks, failures, blank " +
+      "evidence gaps, and a ready/blocked verdict. This validates evidence completeness; it does " +
+      "not scan code or verify that submitted evidence is true. Paid x402 tool billed in USDC on " +
+      "Base — call fabler_list_products first for the current per-call price.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        results: {
+          type: "array",
+          minItems: 1,
+          maxItems: 18,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", enum: RELEASE_CHECK_IDS },
+              status: { type: "string", enum: ["pass", "fail", "not-applicable"] },
+              evidence: {
+                type: "string",
+                maxLength: 500,
+                description: "One-line evidence or not-applicable justification; blank evidence blocks readiness.",
+              },
+            },
+            required: ["id", "status", "evidence"],
+          },
+        },
+      },
+      required: ["results"],
     },
   },
   {
@@ -260,6 +314,26 @@ function requireNonEmptyText(value, field) {
   return text;
 }
 
+function requireReleaseResults(value) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > RELEASE_CHECK_IDS.length) {
+    throw new Error(`results is required and must contain 1-${RELEASE_CHECK_IDS.length} checklist records`);
+  }
+  const seen = new Set();
+  return value.map((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("each result must be an object");
+    if (typeof raw.id !== "string" || !RELEASE_CHECK_ID_SET.has(raw.id)) throw new Error(`unknown checklist id: ${raw.id}`);
+    if (seen.has(raw.id)) throw new Error(`duplicate checklist id: ${raw.id}`);
+    if (!new Set(["pass", "fail", "not-applicable"]).has(raw.status)) {
+      throw new Error('result status must be "pass", "fail", or "not-applicable"');
+    }
+    if (typeof raw.evidence !== "string" || raw.evidence.length > 500) {
+      throw new Error("result evidence must be a string of at most 500 characters");
+    }
+    seen.add(raw.id);
+    return { id: raw.id, status: raw.status, evidence: raw.evidence };
+  });
+}
+
 async function callTool(name, args) {
   if (name === "fabler_scan_secrets") {
     const text = requireNonEmptyText(args.text, "text");
@@ -278,6 +352,14 @@ async function callTool(name, args) {
     const diff = requireNonEmptyText(args.diff, "diff");
     return JSON.stringify(
       await callApi("/audit/diff-security", { method: "POST", body: { diff } }),
+      null,
+      2,
+    );
+  }
+  if (name === "fabler_audit_pre_deploy") {
+    const results = requireReleaseResults(args.results);
+    return JSON.stringify(
+      await callApi("/audit/pre-deploy", { method: "POST", body: { results } }),
       null,
       2,
     );

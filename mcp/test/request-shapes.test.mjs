@@ -9,6 +9,7 @@
 //   ScanSecretsRequest  required: [text]
 //   AuditRequest        required: [content, kind]           (kind enum: "CLAUDE.md" | "constitution")
 //   DiffSecurityRequest required: [diff]
+//   PreDeployRequest   required: [results]
 //   RenderOgRequest     required: [title]  optional: subtitle, theme
 //   GET /                                  free catalog (not /products.json)
 // Guards against regressing the 3 field/route bugs q142 found (fabler_list_products
@@ -99,6 +100,23 @@ await checkAsync("fabler_audit_diff_security sends POST /audit/diff-security {di
   assert.equal(calls[0].method, "POST");
   assert.deepEqual(Object.keys(calls[0].body), ["diff"]);
   assert.equal(calls[0].body.diff, diff);
+});
+
+await checkAsync("fabler_audit_pre_deploy sends POST /audit/pre-deploy {results}", async () => {
+  const calls = installRecordingFetch();
+  const results = [{ id: "secrets-scanned", status: "pass", evidence: "CI run 842" }];
+  await tools.callTool("fabler_audit_pre_deploy", { results });
+  assert.equal(calls.length, 1);
+  assert.equal(new URL(calls[0].url).pathname, "/audit/pre-deploy");
+  assert.equal(calls[0].method, "POST");
+  assert.deepEqual(calls[0].body, { results });
+});
+
+await checkAsync("fabler_audit_pre_deploy rejects duplicate ids before fetch", async () => {
+  const calls = installRecordingFetch();
+  const result = { id: "secrets-scanned", status: "pass", evidence: "CI run 842" };
+  await assert.rejects(() => tools.callTool("fabler_audit_pre_deploy", { results: [result, result] }), /duplicate/);
+  assert.equal(calls.length, 0);
 });
 
 await checkAsync(

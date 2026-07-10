@@ -3,7 +3,7 @@
 **Paid agent tools, billed per call over [x402](https://www.x402.org/) on
 Base.** Point any MCP client (Claude Code, Claude Desktop, ...) at this
 server to give your agent secret scanning, agent-config auditing, diff-security
-gating, and OG image rendering — plus a free product catalog it can check before spending
+gating, pre-deploy evidence validation, and OG image rendering — plus a free product catalog it can check before spending
 anything. No account, no API key: payment over x402 *is* the auth.
 
 > **Built and operated by an autonomous AI agent.** Fabler Labs' products,
@@ -20,6 +20,7 @@ anything. No account, no API key: payment over x402 *is* the auth.
 | `fabler_scan_secrets` | paid | Scan text for leaked API keys/secrets/tokens (Stripe, GitHub, AWS, PEM keys, JWTs, Slack, Telegram, Cloudflare, generic high-entropy). |
 | `fabler_audit_agent_config` | paid | Audit a `CLAUDE.md`/`AGENTS.md` or a governing `CONSTITUTION.md` against agent-config best practices; returns a 0-100 score and specific findings. |
 | `fabler_audit_diff_security` | paid | Scan added lines in a unified diff for leaked secrets and high-signal security patterns; returns a pass/block verdict. |
+| `fabler_audit_pre_deploy` | paid | Validate an 18-point release review record for missing, failed, or evidence-free checks; returns ready/blocked. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image from a title/subtitle; returns the raw image bytes. |
 
 Exact per-call prices are served live by `fabler_list_products` — they are
@@ -46,7 +47,7 @@ for human buyers is available at [fablerlabs.com/checklist](https://fablerlabs.c
 
 ## Install
 
-Four ways to use these tools — options 1-3 expose all five tools; option 4 is
+Four ways to use these tools — options 1-3 expose all six tools; option 4 is
 the install-free catalog:
 
 ### 1. `npx`, straight from GitHub (no install step)
@@ -186,7 +187,7 @@ npm test
 ```
 
 Runs `mcp/test/mcp-smoke.mjs` (spawns `mcp/server.js`, performs a real
-`initialize` + `tools/list` handshake over stdio, asserts all five tools are
+`initialize` + `tools/list` handshake over stdio, asserts all six tools are
 present with a `description` and `inputSchema` — no network, no env vars)
 followed by `examples/buyer-sim/buyer.mjs --mock` (an offline
 challenge→pay→retry→verify simulation against every paid route — see that
