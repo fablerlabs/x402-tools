@@ -1,27 +1,31 @@
 #!/usr/bin/env node
-// buyer.mjs — x402 buyer-simulation e2e harness / worked example.
+// buyer.mjs — x402 buyer-simulation e2e harness (q123; migrated to protocol v2
+// in q179).
 //
-// Plays a BUYING agent against a Fabler x402 worker: request a paid route,
-// receive a 402 challenge, construct a payment, retry, verify delivery.
-// Covers every paid route (the per-call tools + /buy/:sku for three catalog
-// SKUs) plus the free catalog route. Useful both as CI coverage for this repo
-// and as a worked reference for the 402-challenge -> pay -> retry loop.
+// Plays a BUYING agent against a Fabler x402 worker (x402 protocol v2): request a
+// paid route, receive a 402 challenge (the requirements come in the
+// PAYMENT-REQUIRED response header, base64-encoded — v2 moved them out of the
+// body), construct a payment, retry with a PAYMENT-SIGNATURE request header, and
+// verify delivery + the PAYMENT-RESPONSE settlement header. Covers every paid
+// route (the per-call tools + /buy/:sku for every catalog SKU) plus one free route.
 //
 // Modes:
 //   --mock                Fully offline. Drives an in-process worker module
-//                          directly (default: ./fixture-worker.mjs, a small
-//                          reference implementation of the real worker's
-//                          route surface — see its header). Zero npm
-//                          dependencies, zero network. Point --entry at any
-//                          other module exposing a default { fetch(request,
-//                          env) } to run the exact same assertions against it.
-//   --testnet              Real EIP-3009 USDC payment on Base Sepolia against
-//                          a live deployed worker. Needs the optional peers
-//                          `x402-fetch` + `viem` (npm install, not bundled —
-//                          keeps --mock dependency-free) and the env var
-//                          X402_TEST_BUYER_KEY (a funded Base Sepolia test
-//                          wallet's private key). NEVER logged, NEVER
-//                          committed, no default value — see README.md.
+//                          directly (default: ./fixture-worker.mjs — see its
+//                          header for why a fixture exists instead of the
+//                          real q115 worker). Zero npm dependencies, zero
+//                          network. Point --entry at the real worker once it
+//                          exists to run the exact same assertions against it.
+//   --testnet              Real EIP-3009 USDC payment against a live deployed
+//                          worker, auto-paid by a v2-capable x402 client. Needs
+//                          the optional peers `x402-fetch` (a version that speaks
+//                          protocol v2 — PAYMENT-SIGNATURE header, not v1's
+//                          X-PAYMENT) + `viem` (npm install, not bundled — keeps
+//                          --mock dependency-free) and the env var
+//                          X402_TEST_BUYER_KEY (a funded test wallet's private
+//                          key). NEVER logged, NEVER committed, no default value —
+//                          see README.md. This path is NOT exercised by the
+//                          offline mock run; the brain validates it live.
 //
 // Usage:
 //   node buyer.mjs --mock [--entry=<path to a worker module with a default
@@ -75,23 +79,26 @@ function check(label, cond, detail) {
   }
 }
 
-// Builds a syntactically-valid but NOT cryptographically real X-PAYMENT
-// header from a 402 challenge's payment requirement. `overrides` lets tests
-// construct a deliberately-invalid payment (e.g. underpaid).
+// Builds a syntactically-valid but NOT cryptographically real PAYMENT-SIGNATURE
+// header (a base64-encoded v2 PaymentPayload) from a 402 challenge's payment
+// requirement. `overrides` lets tests construct a deliberately-invalid payment
+// (e.g. underpaid).
 function buildMockPaymentHeader(requirement, overrides = {}) {
   const now = Math.floor(Date.now() / 1000);
   const authorization = {
     from: MOCK_BUYER_ADDRESS,
     to: requirement.payTo,
-    value: overrides.value ?? requirement.maxAmountRequired,
+    // v2 renamed v1's `maxAmountRequired` to `amount` (atomic token units).
+    value: overrides.value ?? requirement.amount,
     validAfter: String(now - 60),
     validBefore: String(now + (requirement.maxTimeoutSeconds || 60)),
     nonce: `0x${crypto.randomBytes(32).toString("hex")}`,
   };
   return encodeB64Json({
-    x402Version: requirement.x402Version || 1,
-    scheme: requirement.scheme,
-    network: requirement.network,
+    x402Version: 2,
+    // v2 echoes the chosen requirement back in `accepted` (see @x402/core
+    // PaymentPayload) so the resource server can match it to the route.
+    accepted: requirement,
     payload: {
       // NOT a real ECDSA signature. The fixture facilitator's fake verify()
       // only checks shape/recipient/amount/window/nonce-replay, never
@@ -104,14 +111,21 @@ function buildMockPaymentHeader(requirement, overrides = {}) {
   });
 }
 
+// Decode a v2 402 challenge: the PaymentRequired object lives base64-encoded in
+// the PAYMENT-REQUIRED response header (empty JSON body), not in the body.
+function readChallenge(res) {
+  const header = res.headers.get("PAYMENT-REQUIRED");
+  return header ? decodeB64Json(header) : null;
+}
+
 function paidRouteFixtures() {
   return [
     { method: "POST", path: "/scan/secrets", body: { text: "leaked token sk-live-abcdef1234567890abcdef" } },
-    { method: "POST", path: "/audit/agent-config", body: { content: "# CLAUDE.md\n\n## Commands\nnpm test\n", kind: "CLAUDE.md" } },
+    { method: "POST", path: "/audit/agent-config", body: { text: "# CLAUDE.md\n\n## Commands\nnpm test\n" } },
     { method: "POST", path: "/render/og", body: { title: "buyer-sim smoke test" } },
     { method: "GET", path: "/buy/pack" },
     { method: "GET", path: "/buy/agent-kit" },
-    { method: "GET", path: "/buy/ai-coding-security-pack-v1" },
+    { method: "GET", path: "/buy/security-pack" },
   ];
 }
 
@@ -137,31 +151,33 @@ async function runMock(args) {
   }
   const env = {};
 
-  section("free route: GET / (catalog)");
+  section("free route: GET /products.json");
   {
-    const res = await worker.fetch(new Request(`${BASE}/`), env);
+    const res = await worker.fetch(new Request(`${BASE}/products.json`), env);
     check("no payment needed, no 402", res.status === 200, `got ${res.status}`);
     const body = await res.json().catch(() => null);
-    check("lists resources", Array.isArray(body?.resources) && body.resources.length >= 3, JSON.stringify(body));
+    check("lists the product catalog", Array.isArray(body?.products) && body.products.length >= 3, JSON.stringify(body));
   }
 
   for (const route of paidRouteFixtures()) {
     section(`paid route: ${route.method} ${route.path}`);
 
     const challengeRes = await worker.fetch(new Request(`${BASE}${route.path}`, requestInit(route)), env);
-    check("no X-PAYMENT → 402", challengeRes.status === 402, `got ${challengeRes.status}`);
-    const challengeBody = await challengeRes.json().catch(() => null);
-    const requirement = challengeBody?.accepts?.[0];
+    check("no PAYMENT-SIGNATURE → 402", challengeRes.status === 402, `got ${challengeRes.status}`);
+    const challenge = readChallenge(challengeRes);
+    const requirement = challenge?.accepts?.[0];
     check(
-      "challenge has x402Version + accepts[0]{scheme,network,payTo,maxAmountRequired,resource,asset}",
-      challengeBody?.x402Version === 1 &&
+      "PAYMENT-REQUIRED header decodes to v2 challenge {x402Version:2, resource, accepts[0]{scheme,network,payTo,amount,asset,extra{name,version}}}",
+      challenge?.x402Version === 2 &&
+        typeof challenge?.resource === "string" &&
         requirement?.scheme === "exact" &&
         typeof requirement?.network === "string" &&
         typeof requirement?.payTo === "string" &&
-        typeof requirement?.maxAmountRequired === "string" &&
-        typeof requirement?.resource === "string" &&
-        typeof requirement?.asset === "string",
-      JSON.stringify(challengeBody),
+        typeof requirement?.amount === "string" &&
+        typeof requirement?.asset === "string" &&
+        typeof requirement?.extra?.name === "string" &&
+        typeof requirement?.extra?.version === "string",
+      JSON.stringify(challenge),
     );
     if (!requirement) {
       console.log("  (skipping remaining checks for this route — no usable challenge)");
@@ -170,19 +186,19 @@ async function runMock(args) {
 
     const underpaidHeader = buildMockPaymentHeader(requirement, { value: "1" });
     const underpaidRes = await worker.fetch(
-      new Request(`${BASE}${route.path}`, requestInit(route, { "X-PAYMENT": underpaidHeader })),
+      new Request(`${BASE}${route.path}`, requestInit(route, { "PAYMENT-SIGNATURE": underpaidHeader })),
       env,
     );
-    check("underpaid X-PAYMENT → still 402 (not treated as paid)", underpaidRes.status === 402, `got ${underpaidRes.status}`);
+    check("underpaid PAYMENT-SIGNATURE → still 402 (not treated as paid)", underpaidRes.status === 402, `got ${underpaidRes.status}`);
 
     const paymentHeader = buildMockPaymentHeader(requirement);
     const paidRes = await worker.fetch(
-      new Request(`${BASE}${route.path}`, requestInit(route, { "X-PAYMENT": paymentHeader })),
+      new Request(`${BASE}${route.path}`, requestInit(route, { "PAYMENT-SIGNATURE": paymentHeader })),
       env,
     );
-    check("valid X-PAYMENT (full amount, correct payTo) → 200", paidRes.status === 200, `got ${paidRes.status}`);
-    const settlement = decodeB64Json(paidRes.headers.get("X-PAYMENT-RESPONSE") || "");
-    check("X-PAYMENT-RESPONSE header decodes to {success:true,...}", settlement?.success === true, JSON.stringify(settlement));
+    check("valid PAYMENT-SIGNATURE (full amount, correct payTo) → 200", paidRes.status === 200, `got ${paidRes.status}`);
+    const settlement = decodeB64Json(paidRes.headers.get("PAYMENT-RESPONSE") || "");
+    check("PAYMENT-RESPONSE header decodes to {success:true,...}", settlement?.success === true, JSON.stringify(settlement));
     const paidBody = await paidRes.json().catch(() => null);
     check("paid route returns delivery content", paidBody != null, JSON.stringify(paidBody));
     if (route.path.startsWith("/buy/")) {
@@ -190,10 +206,10 @@ async function runMock(args) {
     }
 
     const replayRes = await worker.fetch(
-      new Request(`${BASE}${route.path}`, requestInit(route, { "X-PAYMENT": paymentHeader })),
+      new Request(`${BASE}${route.path}`, requestInit(route, { "PAYMENT-SIGNATURE": paymentHeader })),
       env,
     );
-    check("replaying the same X-PAYMENT (same nonce) → rejected, not double-delivered", replayRes.status === 402, `got ${replayRes.status}`);
+    check("replaying the same PAYMENT-SIGNATURE (same nonce) → rejected, not double-delivered", replayRes.status === 402, `got ${replayRes.status}`);
   }
 
   finish();
@@ -224,7 +240,7 @@ async function runTestnet(args) {
   } catch {
     console.error(
       "--testnet needs the optional peer packages, not installed here on purpose (keeps --mock at zero " +
-        "deps): run `npm install x402-fetch viem` inside examples/buyer-sim/ (or the repo root) first.",
+        "deps): run `npm install x402-fetch viem` inside x402/test/buyer-sim/ (or hoist to x402/) first.",
     );
     process.exit(2);
   }
@@ -251,9 +267,9 @@ async function runTestnet(args) {
 
   const base = url.replace(/\/+$/, "");
   const routes = [
-    { method: "GET", path: "/", paid: false },
+    { method: "GET", path: "/products.json", paid: false },
     { method: "POST", path: "/scan/secrets", body: { text: "leaked token sk-live-abcdef1234567890abcdef" } },
-    { method: "POST", path: "/audit/agent-config", body: { content: "# CLAUDE.md\n\n## Commands\nnpm test\n", kind: "CLAUDE.md" } },
+    { method: "POST", path: "/audit/agent-config", body: { text: "# CLAUDE.md\n\n## Commands\nnpm test\n" } },
     { method: "POST", path: "/render/og", body: { title: "buyer-sim testnet smoke" } },
     { method: "GET", path: "/buy/pack" },
   ];

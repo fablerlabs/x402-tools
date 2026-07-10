@@ -1,44 +1,73 @@
 // fixture-worker.mjs — self-contained, in-process reference implementation of
-// the Fabler x402 payment worker's HTTP contract, for offline buyer-sim
-// testing ONLY.
+// the Fabler x402 payment worker's HTTP contract (x402 protocol v2), for offline
+// buyer-sim testing ONLY.
 //
-// Same route surface as the real https://x402.fablerlabs.com (GET / for the
-// free catalog, POST /scan/secrets, POST /audit/agent-config, POST /render/og,
-// GET /buy/:sku), same x402 challenge / X-PAYMENT / X-PAYMENT-RESPONSE JSON
-// shapes (per coinbase/x402's specs/x402-specification.md and
-// specs/schemes/exact/scheme_exact_evm.md), but with a FAKE facilitator: it
-// checks payment shape, recipient, amount, time window, and nonce replay, but
-// never verifies the EIP-3009 signature cryptographically (a real facilitator
-// would reject every payment this fixture accepts). That's fine for
-// exercising the HTTP contract offline; a real wallet against the real
-// deployed worker is what actually moves USDC — this fixture never does.
+// Why this file exists: buyer.mjs's `--mock` mode needs a live worker to drive
+// end-to-end, with zero network and zero npm dependencies. The real worker
+// (x402/src/index.ts) delegates the whole protocol to @x402/hono's
+// paymentMiddleware, which calls a live facilitator to verify/settle — not
+// runnable offline. This fixture stands in with the SAME v2 HTTP contract but a
+// FAKE facilitator: it checks payment shape, recipient, amount, time window, and
+// nonce replay, but never verifies the EIP-3009 signature cryptographically (a
+// real facilitator would reject every payment this fixture accepts). That's fine
+// for exercising the HTTP contract; buyer.mjs's --testnet mode is what exercises
+// real signing/verification against a deployed worker.
 //
-// Exports a standard Workers `{ fetch(request) }` handler, so buyer.mjs's
-// `--mock` mode can also point `--entry` at any other module with the same
-// shape (e.g. a local worker checkout) without any change to buyer.mjs itself.
+// The v2 wire contract this mirrors (verified against @x402/core + @x402/hono
+// v2.17, the versions the real worker pins — see x402/src/x402guard.ts /
+// facilitator.ts / catalog.ts on main):
+//   • 402 challenge:  status 402, EMPTY JSON body ({}), and a base64-encoded
+//                     `PAYMENT-REQUIRED` response header carrying the
+//                     PaymentRequired object { x402Version:2, resource,
+//                     accepts:[ PaymentRequirements ] }. (v1 put this in the body;
+//                     v2 moved it to the header — see @x402/core
+//                     x402HTTPResourceServer.createHTTPPaymentRequiredResponse.)
+//   • PaymentRequirements: { scheme:"exact", network:"eip155:8453" (CAIP-2),
+//                     asset (Base USDC), amount (atomic string — renamed from v1's
+//                     maxAmountRequired), payTo, maxTimeoutSeconds, extra:{name,
+//                     version} } — the EIP-712 domain name/version the signer needs.
+//   • payment:        the buyer retries with a base64 `PAYMENT-SIGNATURE` request
+//                     header carrying the PaymentPayload { x402Version:2, accepted
+//                     (the chosen requirement echoed back), payload:{ authorization,
+//                     signature } }.
+//   • settlement:     status 200 + a base64 `PAYMENT-RESPONSE` response header
+//                     carrying the SettleResponse { success, transaction, network,
+//                     payer }.
+//
+// Exports a standard Workers `{ fetch(request) }` handler, so buyer.mjs's --mock
+// mode can also point `--entry` at any other module with a default export
+// exposing fetch(request, env) (see README.md) without changing buyer.mjs.
 
 import { encodeB64Json, decodeB64Json } from "./x402-codec.mjs";
 
 export const PRODUCTS = [
-  { sku: "pack", name: "AI Coding Workflow Pack", priceUsdc: "24000000" },
-  { sku: "agent-kit", name: "Autonomous Agent Starter Kit", priceUsdc: "29000000" },
-  { sku: "ai-coding-security-pack-v1", name: "AI Coding Security Pack", priceUsdc: "29000000" },
+  { sku: "pack", name: "Constitution Pack", priceUsdc: "24000000" },
+  { sku: "agent-kit", name: "Agent Kit", priceUsdc: "29000000" },
+  { sku: "security-pack", name: "Security Pack", priceUsdc: "29000000" },
 ];
 
 const TOOL_PRICE_USDC = "10000"; // $0.01 in USDC atomic units (6 decimals)
-const NETWORK = "base-sepolia";
-// USDC on Base Sepolia (public token contract, not a secret) — verified against
-// docs.cdp.coinbase.com/x402/network-support. Only used to populate the mock
-// challenge's `asset` field; never touched on-chain by this fixture.
-const ASSET = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
-// Placeholder receiving address for offline mock testing only — the Base
-// "burn" address, famously public and owned by nobody. Never a real Fabler
-// Labs wallet. buyer.mjs never hardcodes a payTo; it always reads whatever
-// address the challenge it receives specifies.
+
+// CAIP-2 chain id for Base mainnet — the fixed protocol network the real v2 worker
+// advertises (x402guard.ts: export const NETWORK = "eip155:8453"). The buyer never
+// hardcodes this; it reads whatever network the challenge advertises.
+const NETWORK = "eip155:8453";
+// Canonical USDC (6-decimal) on Base mainnet — the public token contract the real
+// worker prices in (see @x402/evm DEFAULT_STABLECOINS["eip155:8453"]). Only used to
+// populate the mock challenge's `asset`; never touched on-chain by this fixture.
+const ASSET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+// EIP-712 domain params for that USDC contract (name/version) — required in every
+// v2 exact-scheme challenge so a real signer can build the TransferWithAuthorization
+// typed-data. Same values @x402/evm ships for eip155:8453.
+const ASSET_EXTRA = { name: "USD Coin", version: "2" };
+// Placeholder receiving address for offline mock testing only — the Base "burn"
+// address, famously public and owned by nobody. Never a real Fabler Labs wallet.
+// buyer.mjs never hardcodes a payTo; it always reads whatever address the challenge
+// it receives specifies.
 const FIXTURE_PAY_TO = "0x000000000000000000000000000000000000dEaD";
 
-// Replay protection state. Fine for a single test-process lifetime; the real
-// deployed worker backs this with its facilitator's own nonce tracking.
+// Replay protection state. Fine for a single test-process lifetime; a real Worker
+// delegates this to the facilitator's own nonce/authorization tracking.
 const usedNonces = new Set();
 
 function priceFor(pathname) {
@@ -53,33 +82,39 @@ function priceFor(pathname) {
   return null;
 }
 
-function buildChallenge(url, price) {
+// One v2 PaymentRequirements entry (see @x402/core PaymentRequirements type).
+function buildRequirement(url, price) {
   return {
-    x402Version: 1,
-    error: "X-PAYMENT header is required",
-    accepts: [
-      {
-        scheme: "exact",
-        network: NETWORK,
-        maxAmountRequired: price,
-        resource: url.toString(),
-        description: `Fabler x402 fixture — ${url.pathname}`,
-        mimeType: "application/json",
-        payTo: FIXTURE_PAY_TO,
-        maxTimeoutSeconds: 60,
-        asset: ASSET,
-        extra: { name: "USDC", version: "2" },
-      },
-    ],
+    scheme: "exact",
+    network: NETWORK,
+    asset: ASSET,
+    amount: price,
+    payTo: FIXTURE_PAY_TO,
+    maxTimeoutSeconds: 60,
+    extra: ASSET_EXTRA,
   };
 }
 
-// Fake facilitator verify+settle. Checks everything EXCEPT the cryptographic
-// validity of `payload.signature` — see file header.
+// The v2 PaymentRequired object carried (base64-encoded) in the PAYMENT-REQUIRED
+// header of a 402 response.
+function buildPaymentRequired(url, price) {
+  return {
+    x402Version: 2,
+    error: "payment required",
+    resource: url.toString(),
+    accepts: [buildRequirement(url, price)],
+  };
+}
+
+// Fake facilitator verify+settle for a v2 exact/evm payment. Checks everything
+// EXCEPT the cryptographic validity of `payload.signature` — see file header.
 function verifyAndSettle(payment, requirement) {
-  if (!payment || payment.x402Version !== 1) return { ok: false, reason: "bad x402Version" };
-  if (payment.scheme !== requirement.scheme) return { ok: false, reason: "scheme mismatch" };
-  if (payment.network !== requirement.network) return { ok: false, reason: "network mismatch" };
+  if (!payment || payment.x402Version !== 2) return { ok: false, reason: "bad x402Version" };
+  // v2 echoes the chosen requirement back as `accepted`; a real resource server
+  // matches it against the route's advertised requirements.
+  const accepted = payment.accepted;
+  if (!accepted || accepted.scheme !== requirement.scheme) return { ok: false, reason: "scheme mismatch" };
+  if (accepted.network !== requirement.network) return { ok: false, reason: "network mismatch" };
   const auth = payment.payload && payment.payload.authorization;
   if (!auth || typeof payment.payload.signature !== "string") {
     return { ok: false, reason: "malformed payload" };
@@ -90,7 +125,7 @@ function verifyAndSettle(payment, requirement) {
   let value, required;
   try {
     value = BigInt(auth.value);
-    required = BigInt(requirement.maxAmountRequired);
+    required = BigInt(requirement.amount);
   } catch {
     return { ok: false, reason: "malformed amount" };
   }
@@ -113,9 +148,9 @@ function paidResult(pathname, body) {
     return { matches };
   }
   if (pathname === "/audit/agent-config") {
-    const content = String((body && body.content) || "");
+    const text = String((body && body.text) || "");
     return {
-      score: content.trim() ? 72 : 10,
+      score: text.trim() ? 72 : 10,
       findings: [{ rule: "fixture", severity: "warn", fix: "this is a fixture response, not the real audit engine" }],
     };
   }
@@ -129,31 +164,41 @@ function paidResult(pathname, body) {
   return {};
 }
 
+// A v2 402 challenge: empty JSON body, PaymentRequired in the PAYMENT-REQUIRED
+// header. `error` lets a rejected retry report why (still an empty body, matching
+// the real worker's shape).
+function challengeResponse(url, price, error) {
+  const paymentRequired = buildPaymentRequired(url, price);
+  if (error) paymentRequired.error = error;
+  return Response.json(
+    {},
+    { status: 402, headers: { "PAYMENT-REQUIRED": encodeB64Json(paymentRequired) } },
+  );
+}
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
 
-    if (request.method === "GET" && url.pathname === "/") {
-      return Response.json({
-        name: "Fabler Labs x402 Storefront (fixture)",
-        x402Version: 1,
-        resources: PRODUCTS.map((p) => ({ resource: `/buy/${p.sku}`, metadata: { description: p.name } })),
-      });
+    if (request.method === "GET" && url.pathname === "/products.json") {
+      return Response.json({ products: PRODUCTS });
     }
 
     const price = priceFor(url.pathname);
     if (price == null) return new Response("not found", { status: 404 });
 
-    const requirement = buildChallenge(url, price).accepts[0];
-    const paymentHeader = request.headers.get("X-PAYMENT");
+    const requirement = buildRequirement(url, price);
+    // v2 reads PAYMENT-SIGNATURE; the real middleware also accepts the legacy
+    // X-PAYMENT header, so mirror that fallback here.
+    const paymentHeader = request.headers.get("PAYMENT-SIGNATURE") || request.headers.get("X-PAYMENT");
     if (!paymentHeader) {
-      return Response.json(buildChallenge(url, price), { status: 402 });
+      return challengeResponse(url, price);
     }
 
     const payment = decodeB64Json(paymentHeader);
     const result = verifyAndSettle(payment, requirement);
     if (!result.ok) {
-      return Response.json({ ...buildChallenge(url, price), error: result.reason }, { status: 402 });
+      return challengeResponse(url, price, result.reason);
     }
 
     let body = null;
@@ -173,7 +218,7 @@ export default {
     };
     return Response.json(paidResult(url.pathname, body), {
       status: 200,
-      headers: { "X-PAYMENT-RESPONSE": encodeB64Json(settlement) },
+      headers: { "PAYMENT-RESPONSE": encodeB64Json(settlement) },
     });
   },
 };

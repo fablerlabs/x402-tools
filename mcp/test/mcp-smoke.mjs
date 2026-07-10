@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // CI smoke test: real MCP handshake with mcp/server.js over stdio.
 // Zero dependencies — spawns the server, speaks newline-delimited JSON-RPC,
-// asserts `initialize` answers and `tools/list` exposes the four x402 tools.
+// asserts `initialize` answers and `tools/list` exposes the five x402 tools.
 // No env vars and no network needed: this only exercises the handshake +
 // tool listing, never tools/call (which would need a live x402 endpoint).
 
@@ -14,6 +14,7 @@ const SERVER = join(root, "server.js");
 const EXPECTED_TOOLS = [
   "fabler_scan_secrets",
   "fabler_audit_agent_config",
+  "fabler_audit_diff_security",
   "fabler_render_og",
   "fabler_list_products",
 ];

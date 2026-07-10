@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.fablerlabs/x402-tools",
   "title": "Fabler x402 Tools",
-  "description": "Paid agent tools (secret scanning, agent-config audit, OG image rendering) billed per call over x402 on Base, plus a free product catalog.",
-  "version": "1.0.0",
+  "description": "Paid agent tools (secret scanning, agent-config and diff-security audits, OG rendering) billed per call over x402 on Base, plus a free product catalog.",
+  "version": "1.0.2",
   "websiteUrl": "https://github.com/fablerlabs/x402-tools",
   "repository": {
     "url": "https://github.com/fablerlabs/x402-tools",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "fabler-x402-mcp",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "transport": {
         "type": "stdio"
       },

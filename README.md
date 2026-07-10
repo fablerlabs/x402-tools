@@ -2,8 +2,8 @@
 
 **Paid agent tools, billed per call over [x402](https://www.x402.org/) on
 Base.** Point any MCP client (Claude Code, Claude Desktop, ...) at this
-server to give your agent secret scanning, agent-config auditing, and OG
-image rendering — plus a free product catalog it can check before spending
+server to give your agent secret scanning, agent-config auditing, diff-security
+gating, and OG image rendering — plus a free product catalog it can check before spending
 anything. No account, no API key: payment over x402 *is* the auth.
 
 > **Built and operated by an autonomous AI agent.** Fabler Labs' products,
@@ -19,6 +19,7 @@ anything. No account, no API key: payment over x402 *is* the auth.
 | `fabler_list_products` | free | List current products and their per-call USDC price. Call this first. |
 | `fabler_scan_secrets` | paid | Scan text for leaked API keys/secrets/tokens (Stripe, GitHub, AWS, PEM keys, JWTs, Slack, Telegram, Cloudflare, generic high-entropy). |
 | `fabler_audit_agent_config` | paid | Audit a `CLAUDE.md`/`AGENTS.md` or a governing `CONSTITUTION.md` against agent-config best practices; returns a 0-100 score and specific findings. |
+| `fabler_audit_diff_security` | paid | Scan added lines in a unified diff for leaked secrets and high-signal security patterns; returns a pass/block verdict. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image from a title/subtitle; returns the raw image bytes. |
 
 Exact per-call prices are served live by `fabler_list_products` — they are
@@ -75,7 +76,7 @@ payment challenge, also install the optional x402 payment peers alongside
 it:
 
 ```bash
-npm install x402-fetch viem
+npm install @x402/fetch @x402/evm viem
 ```
 
 (`npx github:...` users: clone the repo instead so you have a place to
@@ -88,14 +89,14 @@ Every paid tool call hits a Fabler x402 endpoint under
 `https://x402.fablerlabs.com` (override with `X402_BASE_URL`, e.g. for local
 testing against a staging deploy).
 
-- **With `X402_BUYER_PRIVATE_KEY` set and `x402-fetch` + `viem` installed:**
+- **With `X402_BUYER_PRIVATE_KEY` set and the v2 `@x402/fetch`, `@x402/evm`, and `viem` packages installed:**
   the server signs and settles the 402 payment on Base automatically using
-  [`x402-fetch`](https://www.npmjs.com/package/x402-fetch)'s
-  `wrapFetchWithPayment`, then returns the tool's real result.
+  `@x402/fetch`'s v2 payment wrapper, then returns the tool's real result.
 - **Otherwise:** the server makes a plain request. If the endpoint answers
   `402 Payment Required`, the server does **not** treat this as an error — it
-  returns the parsed x402 challenge (`accepts` array: scheme, network,
-  amount, `payTo` address, asset, etc.) as the tool's structured result, along
+  decodes the x402 v2 `PAYMENT-REQUIRED` response header and returns the parsed
+  challenge (`accepts` array: scheme, network, amount, `payTo` address, asset,
+  etc.) as the tool's structured result, along
   with a note explaining how to pay it. Your agent (or you) can settle that
   challenge through any x402-capable wallet/rails and retry the call.
 
@@ -122,9 +123,9 @@ It is:
 Treat it like any other hot-wallet key: fund it with only what you're willing
 to spend on these tools, and prefer a dedicated wallet over your main one.
 
-Also note: `fabler_scan_secrets` and `fabler_audit_agent_config` send the
-text you pass as an argument to the Fabler x402 API for processing. Don't
-pass data you're not willing to transmit off-machine. Full policy in
+Also note: the scan and audit tools send the text or diff you pass as an
+argument to the Fabler x402 API for processing. Don't pass data you're not
+willing to transmit off-machine. Full policy in
 [SECURITY.md](SECURITY.md).
 
 ## Publish targets (for maintainers)
@@ -152,7 +153,7 @@ npm test
 ```
 
 Runs `mcp/test/mcp-smoke.mjs` (spawns `mcp/server.js`, performs a real
-`initialize` + `tools/list` handshake over stdio, asserts all four tools are
+`initialize` + `tools/list` handshake over stdio, asserts all five tools are
 present with a `description` and `inputSchema` — no network, no env vars)
 followed by `examples/buyer-sim/buyer.mjs --mock` (an offline
 challenge→pay→retry→verify simulation against every paid route — see that

@@ -1,19 +1,31 @@
 {
   "name": "fabler-x402-mcp",
-  "version": "1.0.0",
-  "description": "MCP server for Fabler Labs' paid x402 tools (secret scanning, agent-config audit, OG image rendering) plus a free product catalog",
-  "bin": { "fabler-x402-mcp": "mcp/server.js" },
-  "engines": { "node": ">=18" },
+  "version": "1.0.2",
+  "description": "MCP server for Fabler Labs' paid x402 tools (secret scanning, agent-config and diff-security audits, OG rendering) plus a free product catalog",
+  "bin": {
+    "fabler-x402-mcp": "mcp/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "type": "commonjs",
   "scripts": {
-    "test": "node mcp/test/mcp-smoke.mjs && node examples/buyer-sim/buyer.mjs --mock"
+    "test": "node mcp/test/mcp-smoke.mjs && node mcp/test/request-shapes.test.mjs && node examples/buyer-sim/buyer.mjs --mock"
   },
   "optionalDependencies": {
-    "x402-fetch": "*",
-    "viem": "*"
+    "@x402/evm": "^2.17.0",
+    "@x402/fetch": "^2.17.0",
+    "viem": "^2.48.11"
   },
   "repository": "github:fablerlabs/x402-tools",
-  "keywords": ["mcp", "mcp-server", "model-context-protocol", "x402", "payments", "ai-agents"],
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "x402",
+    "payments",
+    "ai-agents"
+  ],
   "author": "Fabler Labs",
   "license": "MIT"
 }

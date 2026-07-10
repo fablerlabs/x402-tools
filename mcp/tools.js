@@ -16,11 +16,14 @@
 // and `viem` are installed alongside this server, the request auto-pays a
 // 402 challenge on Base and retries. Otherwise (no key, or peers missing)
 // a bare 402 response is parsed and returned as structured content so the
-// calling agent can pay through its own x402-capable rails and retry.
+// calling agent can pay through its own x402-capable rails and retry. The
+// deployed worker speaks x402 protocol v2 (@x402/hono): the challenge is
+// NOT in the 402 response body (which is `{}`) — it's base64-JSON in the
+// `payment-required` response header. See decodePaymentRequiredHeader().
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.0" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.2" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
 
 function x402Base() {
@@ -57,20 +60,16 @@ function redactedPaymentError() {
 async function getPayingFetch() {
   const key = buyerKey();
   if (!key) return null;
-  const x402Fetch = tryRequire("x402-fetch");
-  const viem = tryRequire("viem");
+  const x402Fetch = tryRequire("@x402/fetch");
+  const x402Evm = tryRequire("@x402/evm");
   const viemAccounts = tryRequire("viem/accounts");
-  const viemChains = tryRequire("viem/chains");
-  if (!x402Fetch || !viem || !viemAccounts || !viemChains) return null;
+  if (!x402Fetch || !x402Evm || !viemAccounts) return null;
   try {
     const normalized = key.startsWith("0x") ? key : `0x${key}`;
     const account = viemAccounts.privateKeyToAccount(normalized);
-    const walletClient = viem.createWalletClient({
-      account,
-      chain: viemChains.base,
-      transport: viem.http(),
+    return x402Fetch.wrapFetchWithPaymentFromConfig(fetch, {
+      schemes: [{ network: "eip155:8453", client: new x402Evm.ExactEvmScheme(account) }],
     });
-    return x402Fetch.wrapFetchWithPayment(fetch, walletClient);
   } catch {
     throw redactedPaymentError();
   }
@@ -116,11 +115,30 @@ const TOOLS = [
     },
   },
   {
+    name: "fabler_audit_diff_security",
+    description:
+      "Scan the added lines in a unified code diff for leaked secrets and high-signal security " +
+      "patterns, then return a pass/block merge-gate verdict. This is heuristic pattern matching, " +
+      "not a full static analyzer. Paid x402 tool billed in USDC on Base — call " +
+      "fabler_list_products first for the current per-call price.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        diff: {
+          type: "string",
+          maxLength: 200000,
+          description: "Unified diff text, such as the output of git diff (maximum 200,000 characters)",
+        },
+      },
+      required: ["diff"],
+    },
+  },
+  {
     name: "fabler_render_og",
     description:
       "Render a branded 1200x630 OG/social-card image (PNG, or SVG if the raster step falls back) " +
-      "from a title and optional subtitle, and return the raw image bytes plus content type. Paid " +
-      "x402 tool billed in USDC on Base — call fabler_list_products first for the current " +
+      "from a title and optional subtitle, and return it as base64 image data plus content type. " +
+      "Paid x402 tool billed in USDC on Base — call fabler_list_products first for the current " +
       "per-call price.",
     inputSchema: {
       type: "object",
@@ -141,11 +159,29 @@ const TOOLS = [
   },
 ];
 
+// x402 protocol v2 (@x402/hono, see src/x402guard.ts) puts the payment
+// challenge in a base64-JSON `payment-required` response header, not the
+// body (the 402 body is `{}`). Mirrors @x402/core's safeBase64Decode +
+// PaymentRequiredV2Schema shape: { x402Version: 2, resource, accepts: [...] }.
+// Returns null on a missing/malformed header so the caller can fall back.
+function decodePaymentRequiredHeader(res) {
+  const header = res.headers.get("payment-required");
+  if (!header) return null;
+  try {
+    return JSON.parse(Buffer.from(header, "base64").toString("utf-8"));
+  } catch {
+    return null;
+  }
+}
+
 // callApi hits one x402 endpoint. `paid: true` (default) means: try to
 // auto-pay via getPayingFetch() when a wallet is configured; otherwise parse
 // and return a bare 402 as structured data instead of throwing. `paid: false`
 // (fabler_list_products) always uses plain fetch and never touches payment.
-async function callApi(path, { method = "GET", body, paid = true } = {}) {
+// `binary: true` (fabler_render_og) means a 200 response body is an image, not
+// JSON — read it as bytes and base64-encode it rather than mangling it through
+// res.text() + JSON.parse.
+async function callApi(path, { method = "GET", body, paid = true, binary = false } = {}) {
   const url = `${x402Base()}${path}`;
   const init = {
     method,
@@ -164,30 +200,50 @@ async function callApi(path, { method = "GET", body, paid = true } = {}) {
   }
 
   const res = await usedFetch(url, init);
-  const text = await res.text();
 
   if (paid && res.status === 402 && !payingFetchActive) {
-    let challenge;
-    try {
-      challenge = JSON.parse(text);
-    } catch {
-      challenge = { raw: text };
+    // Primary path: v2 challenge lives in the `payment-required` header.
+    let challenge = decodePaymentRequiredHeader(res);
+    if (!challenge) {
+      // Defensive fallback only — the deployed worker never sends a v1-style
+      // body challenge, but don't swallow a 402 body an intermediary (proxy,
+      // test fixture) might still send instead of/alongside the header.
+      const text = await res.text();
+      try {
+        challenge = JSON.parse(text);
+      } catch {
+        challenge = { raw: text };
+      }
+    } else {
+      await res.text().catch(() => {}); // drain the (empty) v2 body
     }
     return {
       paid: false,
       status: 402,
       challenge,
       note:
-        "Payment required. Set X402_BUYER_PRIVATE_KEY and `npm install x402-fetch viem` " +
-        "alongside this server to pay automatically, or settle this challenge through your " +
-        "own x402-capable rails and retry the call.",
+        "Payment required (x402 protocol v2). Set X402_BUYER_PRIVATE_KEY and " +
+        "`npm install @x402/fetch @x402/evm viem` alongside this server to pay automatically, or settle " +
+        "this challenge through your own x402-capable rails and retry the call.",
     };
   }
 
   if (!res.ok) {
+    const text = await res.text();
     throw new Error(`x402 API ${res.status}: ${text.slice(0, 500)}`);
   }
 
+  if (binary) {
+    const buf = Buffer.from(await res.arrayBuffer());
+    return {
+      paid: payingFetchActive,
+      status: res.status,
+      contentType: res.headers.get("content-type") || "application/octet-stream",
+      dataBase64: buf.toString("base64"),
+    };
+  }
+
+  const text = await res.text();
   let data;
   try {
     data = JSON.parse(text);
@@ -217,12 +273,20 @@ async function callTool(name, args) {
       2,
     );
   }
+  if (name === "fabler_audit_diff_security") {
+    const diff = requireNonEmptyText(args.diff, "diff");
+    return JSON.stringify(
+      await callApi("/audit/diff-security", { method: "POST", body: { diff } }),
+      null,
+      2,
+    );
+  }
   if (name === "fabler_render_og") {
     const title = requireNonEmptyText(args.title, "title");
     const body = { title };
     if (typeof args.subtitle === "string" && args.subtitle) body.subtitle = args.subtitle;
     if (args.theme === "light" || args.theme === "dark") body.theme = args.theme;
-    return JSON.stringify(await callApi("/render/og", { method: "POST", body }), null, 2);
+    return JSON.stringify(await callApi("/render/og", { method: "POST", body, binary: true }), null, 2);
   }
   if (name === "fabler_list_products") {
     // The free, machine-readable catalog is served at the API root, not a
@@ -285,4 +349,12 @@ async function dispatch(msg) {
   }
 }
 
-module.exports = { TOOLS, SERVER_INFO, DEFAULT_PROTOCOL_VERSION, callApi, callTool, dispatch };
+module.exports = {
+  TOOLS,
+  SERVER_INFO,
+  DEFAULT_PROTOCOL_VERSION,
+  callApi,
+  callTool,
+  dispatch,
+  decodePaymentRequiredHeader,
+};
