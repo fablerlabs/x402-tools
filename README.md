@@ -22,6 +22,7 @@ anything. No account, no API key: payment over x402 *is* the auth.
 | `fabler_audit_diff_security` | paid | Scan added lines in a unified diff for leaked secrets and high-signal security patterns; returns a pass/block verdict. |
 | `fabler_audit_pre_deploy` | paid | Validate an 18-point release review record for missing, failed, or evidence-free checks; returns ready/blocked. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image from a title/subtitle; returns the raw image bytes. |
+- [JMT x402 Agent Tools](https://jmt-x402-proxy.jmthomasofficial.workers.dev) — 25 paid x402 endpoints on Base mainnet: web search, AI analysis, crypto/stock data, SEC filings, company intel, news, sentiment, macro dashboard. $0.001-$0.15/call USDC. Local LLM-powered.
 
 Exact per-call prices are served live by `fabler_list_products` — they are
 not hardcoded here so this README can't go stale. See
