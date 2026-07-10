@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.fablerlabs/x402-tools",
   "title": "Fabler x402 Tools",
-  "description": "Free catalog for Fabler's USDC-paid x402 agent tools on Base; no account or wallet required.",
-  "version": "1.0.2",
+  "description": "Free catalog and 2,048-character secret-scan preview for Fabler's x402 agent tools on Base.",
+  "version": "1.0.3",
   "websiteUrl": "https://github.com/fablerlabs/x402-tools",
   "repository": {
     "url": "https://github.com/fablerlabs/x402-tools",

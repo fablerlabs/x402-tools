@@ -73,7 +73,7 @@ x402 payment libraries, so automatic payment works without a separate npm instal
 entirely if you'd rather pay challenges through your own x402-capable rails
 (see "Payment flow" below).
 
-### 4. Remote catalog (no install)
+### 4. Remote free tools (no install)
 
 ```json
 {
@@ -87,8 +87,9 @@ entirely if you'd rather pay challenges through your own x402-capable rails
 ```
 
 This remote server is listed in the official MCP Registry as
-`com.fablerlabs/x402-tools`. It exposes only the free `fabler_list_products`
-catalog; use options 1-3 for the paid tools.
+`com.fablerlabs/x402-tools`. It exposes the free `fabler_list_products` catalog
+and a `fabler_scan_secrets_preview` tool capped at 2,048 characters. Use options
+1-3 for full scans and the other paid tools.
 
 Normal npm and `npx github:...` installs include the optional x402 payment
 dependencies. If they were explicitly omitted, install them before enabling
@@ -149,7 +150,7 @@ willing to transmit off-machine. Full policy in
 ## Publish targets (for maintainers)
 
 - **Official MCP registry** — [`mcp/server.json`](mcp/server.json) declares
-  `com.fablerlabs/x402-tools` as the free Streamable HTTP catalog at
+  `com.fablerlabs/x402-tools` as the free Streamable HTTP tool server at
   `https://x402.fablerlabs.com/mcp`. Submit it with `mcp-publisher` using DNS
   authentication on `fablerlabs.com`. Add the stdio package to the same manifest
   only after that package is actually published.
