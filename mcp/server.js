@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fabler x402 Tools MCP server — lets any MCP client (Claude Code, Claude
 // Desktop, ...) call Fabler Labs' paid x402 tools (secret scanning, agent
-// config audits, OG card rendering) plus the free product catalog.
+// config audits, readable-page extraction, OG card rendering) plus the free product catalog.
 // Zero required dependencies: speaks MCP's stdio transport (newline-delimited
 // JSON-RPC) directly. Node 18+ (global fetch). Optional dependencies
 // `@x402/fetch`, `@x402/evm`, and `viem` enable automatic on-chain payment —

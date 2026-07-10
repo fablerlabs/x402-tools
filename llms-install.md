@@ -6,7 +6,7 @@ step has a verification check.
 
 ## What you are installing
 
-A zero-required-dependency MCP stdio server (Node 18+) exposing seven tools:
+A zero-required-dependency MCP stdio server (Node 18+) exposing eight tools:
 
 | Tool | Cost | What it does |
 |---|---|---|
@@ -16,6 +16,7 @@ A zero-required-dependency MCP stdio server (Node 18+) exposing seven tools:
 | `fabler_audit_diff_security` | paid | Scan a unified diff for leaked secrets and high-signal security patterns. |
 | `fabler_audit_pre_deploy` | paid | Validate an 18-point release record for missing, failed, or evidence-free checks. |
 | `fabler_audit_url_security` | paid | Snapshot public HTTPS status, redirects, security headers, and cookie flags without retaining body content. |
+| `fabler_scrape_web_page` | paid | Fetch a public HTTPS page as bounded clean readable text and page metadata. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image. |
 
 The server talks to `https://x402.fablerlabs.com`, a live, already-deployed
@@ -90,7 +91,7 @@ npm install @x402/fetch @x402/evm viem
      | npx -y github:fablerlabs/x402-tools
    ```
 
-   Expect two JSON-RPC responses; the second lists all seven `fabler_*` tools.
+   Expect two JSON-RPC responses; the second lists all eight `fabler_*` tools.
 
 2. End-to-end, no wallet needed: call `fabler_list_products` from the MCP
    client. It's free and hits the live catalog — a non-empty product list is
@@ -125,7 +126,7 @@ npm install @x402/fetch @x402/evm viem
 - `X402_BUYER_PRIVATE_KEY` is read from the environment only, used solely to
   build a local wallet client, and never logged, echoed, or transmitted to
   Fabler Labs in any form.
-- `fabler_scan_secrets` and `fabler_audit_agent_config` send whatever text
-  the agent passes them to the Fabler x402 API for processing — don't run
-  them on data you're not willing to transmit off-machine.
+- Paid tools send their arguments to the Fabler x402 API for processing.
+  `fabler_scrape_web_page` fetches and returns bounded text from the public HTTPS URL supplied.
+  Don't pass data or targets you're not willing to transmit off-machine.
 - Full policy in [SECURITY.md](SECURITY.md).

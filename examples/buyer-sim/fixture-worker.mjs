@@ -79,6 +79,7 @@ function priceFor(pathname) {
   if (pathname === "/scan/secrets" || pathname === "/audit/agent-config" || pathname === "/render/og") {
     return TOOL_PRICE_USDC;
   }
+  if (pathname === "/scrape") return "5000";
   return null;
 }
 
@@ -156,6 +157,9 @@ function paidResult(pathname, body) {
   }
   if (pathname === "/render/og") {
     return { url: "https://fixture.local/og/mock.png" };
+  }
+  if (pathname === "/scrape") {
+    return { title: "Example Domain", text: "Example Domain", word_count: 2, truncated: false };
   }
   if (pathname.startsWith("/buy/")) {
     const sku = pathname.slice("/buy/".length);

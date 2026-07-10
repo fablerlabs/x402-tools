@@ -123,6 +123,7 @@ function paidRouteFixtures() {
     { method: "POST", path: "/scan/secrets", body: { text: "leaked token sk-live-abcdef1234567890abcdef" } },
     { method: "POST", path: "/audit/agent-config", body: { text: "# CLAUDE.md\n\n## Commands\nnpm test\n" } },
     { method: "POST", path: "/render/og", body: { title: "buyer-sim smoke test" } },
+    { method: "GET", path: "/scrape?url=https%3A%2F%2Fexample.com%2F" },
     { method: "GET", path: "/buy/pack" },
     { method: "GET", path: "/buy/agent-kit" },
     { method: "GET", path: "/buy/security-pack" },
@@ -271,6 +272,7 @@ async function runTestnet(args) {
     { method: "POST", path: "/scan/secrets", body: { text: "leaked token sk-live-abcdef1234567890abcdef" } },
     { method: "POST", path: "/audit/agent-config", body: { text: "# CLAUDE.md\n\n## Commands\nnpm test\n" } },
     { method: "POST", path: "/render/og", body: { title: "buyer-sim testnet smoke" } },
+    { method: "GET", path: "/scrape?url=https%3A%2F%2Fexample.com%2F" },
     { method: "GET", path: "/buy/pack" },
   ];
 

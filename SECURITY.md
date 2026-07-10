@@ -24,6 +24,7 @@ do not open a public issue for anything exploitable.
   environment only at call time and is never logged, echoed, or included in
   any tool result or error message — see `mcp/tools.js`'s `redactedPaymentError()`.
 - The paid tools send their arguments to the Fabler x402 API for processing.
-  `fabler_audit_url_security` fetches the public HTTPS target you provide but
-  does not retain response-body content. Don't pass data or targets you're not
+  `fabler_audit_url_security` and `fabler_scrape_web_page` fetch the public HTTPS target you
+  provide; the security tool does not retain response-body content, while the scraper returns
+  bounded extracted page text. Don't pass data or targets you're not
   willing to transmit off-machine.

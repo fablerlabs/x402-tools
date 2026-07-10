@@ -23,7 +23,7 @@
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.5" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.6" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
 const RELEASE_CHECK_IDS = [
   "secrets-scanned",
@@ -216,6 +216,27 @@ const TOOLS = [
           format: "uri",
           maxLength: 2048,
           description: "Public HTTPS URL using the default port, without credentials or a fragment",
+        },
+      },
+      required: ["url"],
+    },
+  },
+  {
+    name: "fabler_scrape_web_page",
+    description:
+      "Fetch a public HTTPS page and return clean readable text plus title, author, publish date, " +
+      "hostname, excerpt, word count, final URL, and redirect evidence. HTML only, with bounded " +
+      "source size, output size, redirects, and runtime. Paid x402 tool billed in USDC on Base - " +
+      "call fabler_list_products first for the current per-call price.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        url: {
+          type: "string",
+          format: "uri",
+          maxLength: 2048,
+          description: "Public HTTPS page URL using the default port, without credentials or a fragment",
         },
       },
       required: ["url"],
@@ -433,6 +454,14 @@ async function callTool(name, args) {
     const url = requirePublicHttpsUrl(args.url);
     return JSON.stringify(
       await callApi("/audit/url-security", { method: "POST", body: { url } }),
+      null,
+      2,
+    );
+  }
+  if (name === "fabler_scrape_web_page") {
+    const url = requirePublicHttpsUrl(args.url);
+    return JSON.stringify(
+      await callApi(`/scrape?url=${encodeURIComponent(url)}`, { method: "GET" }),
       null,
       2,
     );

@@ -11,6 +11,7 @@
 //   DiffSecurityRequest required: [diff]
 //   PreDeployRequest   required: [results]
 //   UrlSecurityRequest required: [url]
+//   ScrapeRequest      required query: [url]
 //   RenderOgRequest     required: [title]  optional: subtitle, theme
 //   GET /                                  free catalog (not /products.json)
 // Guards against regressing the 3 field/route bugs q142 found (fabler_list_products
@@ -140,6 +141,26 @@ await checkAsync("fabler_audit_url_security rejects unsafe URLs before fetch", a
   ]) {
     const calls = installRecordingFetch();
     await assert.rejects(() => tools.callTool("fabler_audit_url_security", { url }));
+    assert.equal(calls.length, 0, `unsafe URL must fail before fetch: ${url}`);
+  }
+});
+
+await checkAsync("fabler_scrape_web_page sends GET /scrape with one encoded url query parameter", async () => {
+  const calls = installRecordingFetch();
+  await tools.callTool("fabler_scrape_web_page", { url: "https://Example.com/article?q=one two" });
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.equal(requestUrl.pathname, "/scrape");
+  assert.equal(requestUrl.searchParams.get("url"), "https://example.com/article?q=one%20two");
+  assert.deepEqual([...requestUrl.searchParams.keys()], ["url"]);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[0].body, undefined);
+});
+
+await checkAsync("fabler_scrape_web_page rejects unsafe URLs before payment or fetch", async () => {
+  for (const url of ["http://example.com", "https://127.0.0.1/", "https://metadata.internal/"]) {
+    const calls = installRecordingFetch();
+    await assert.rejects(() => tools.callTool("fabler_scrape_web_page", { url }));
     assert.equal(calls.length, 0, `unsafe URL must fail before fetch: ${url}`);
   }
 });

@@ -1,8 +1,8 @@
 {
   "name": "fabler-x402-tools",
   "displayName": "Fabler x402 Tools",
-  "version": "1.0.5",
-  "description": "Paid agent tools for secrets, agent configs, diffs, deploy evidence, public URL security, and OG rendering over x402 on Base, plus a free catalog.",
+  "version": "1.0.6",
+  "description": "Paid agent tools for secrets, agent configs, diffs, deploy evidence, URL security, web scraping, and OG rendering over x402 on Base, plus a free catalog.",
   "author": {
     "name": "Fabler Labs",
     "email": "github@fablerlabs.com",
