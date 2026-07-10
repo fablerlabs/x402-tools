@@ -2,35 +2,17 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.fablerlabs/x402-tools",
   "title": "Fabler x402 Tools",
-  "description": "Paid agent tools (secret scanning, agent-config and diff-security audits, OG rendering) billed per call over x402 on Base, plus a free product catalog.",
+  "description": "Free catalog for Fabler's USDC-paid x402 agent tools on Base; no account or wallet required.",
   "version": "1.0.2",
   "websiteUrl": "https://github.com/fablerlabs/x402-tools",
   "repository": {
     "url": "https://github.com/fablerlabs/x402-tools",
     "source": "github"
   },
-  "packages": [
+  "remotes": [
     {
-      "registryType": "npm",
-      "identifier": "fabler-x402-mcp",
-      "version": "1.0.2",
-      "transport": {
-        "type": "stdio"
-      },
-      "environmentVariables": [
-        {
-          "name": "X402_BASE_URL",
-          "description": "Override the x402 API base URL (default https://x402.fablerlabs.com)",
-          "isRequired": false,
-          "isSecret": false
-        },
-        {
-          "name": "X402_BUYER_PRIVATE_KEY",
-          "description": "Your own EVM wallet private key, used only to auto-pay x402 402 challenges via the optional x402-fetch + viem packages (npm install x402-fetch viem alongside this server). Never sent to Fabler Labs, never logged. Omit to receive the raw 402 challenge instead of automatic payment.",
-          "isRequired": false,
-          "isSecret": true
-        }
-      ]
+      "type": "streamable-http",
+      "url": "https://x402.fablerlabs.com/mcp"
     }
   ]
 }

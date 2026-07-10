@@ -30,7 +30,8 @@ catalog these tools call under the hood.
 
 ## Install
 
-Three ways to run this server — pick one:
+Four ways to use these tools — options 1-3 expose all five tools; option 4 is
+the install-free catalog:
 
 ### 1. `npx`, straight from GitHub (no install step)
 
@@ -71,6 +72,23 @@ the extension's settings UI instead of a config file.
 entirely if you'd rather pay challenges through your own x402-capable rails
 (see "Payment flow" below).
 
+### 4. Remote catalog (no install)
+
+```json
+{
+  "mcpServers": {
+    "fabler-x402-catalog": {
+      "type": "http",
+      "url": "https://x402.fablerlabs.com/mcp"
+    }
+  }
+}
+```
+
+This remote server is listed in the official MCP Registry as
+`com.fablerlabs/x402-tools`. It exposes only the free `fabler_list_products`
+catalog; use options 1-3 for the paid tools.
+
 To let this server **pay automatically** instead of just reporting the
 payment challenge, also install the optional x402 payment peers alongside
 it:
@@ -79,9 +97,9 @@ it:
 npm install @x402/fetch @x402/evm viem
 ```
 
-(`npx github:...` users: clone the repo instead so you have a place to
-`npm install` these — `npx` alone won't pull in optional peers for a
-GitHub-sourced package.)
+These packages are declared as optional dependencies, so normal `npm` and
+`npx github:...` installs include them unless optional dependencies are explicitly
+omitted.
 
 ## Payment flow
 
@@ -131,15 +149,15 @@ willing to transmit off-machine. Full policy in
 ## Publish targets (for maintainers)
 
 - **Official MCP registry** — [`mcp/server.json`](mcp/server.json) declares
-  `com.fablerlabs/x402-tools` as an **npm**-registry package
-  (`fabler-x402-mcp`). Publish with `npm publish` from the repo root, then
-  submit `mcp/server.json` via `mcp-publisher` (DNS auth on `fablerlabs.com`).
+  `com.fablerlabs/x402-tools` as the free Streamable HTTP catalog at
+  `https://x402.fablerlabs.com/mcp`. Submit it with `mcp-publisher` using DNS
+  authentication on `fablerlabs.com`. Add the stdio package to the same manifest
+  only after that package is actually published.
 - **Claude Desktop extension** — `bash mcp/build-mcpb.sh` builds
   `dist/fabler-x402-tools.mcpb` from [`manifest.json`](manifest.json) +
   `mcp/server.js` + `mcp/tools.js` + `LICENSE`, for a GitHub release asset.
-  This is a second, independent distribution path from the npm one above —
-  both point at the same source, packaged differently for different
-  installers.
+  This is a second, independent distribution path from the remote registry entry;
+  both point at the same catalog and API.
 - **Claude Code plugin** — [`.claude-plugin/`](.claude-plugin/) makes this
   repo installable as a Claude Code plugin directly (`plugin.json` +
   `mcp.json`), the same pattern as

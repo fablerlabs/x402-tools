@@ -3,9 +3,9 @@
 # zip root + mcp/server.js + mcp/tools.js + LICENSE) for one-click install as
 # a Claude Desktop extension. Output: dist/fabler-x402-tools.mcpb
 #
-# Note: the official MCP registry entry (mcp/server.json) publishes this
-# server as an npm package ("fabler-x402-mcp"), not as an .mcpb bundle — see
-# README.md's "Publish" section for why both paths exist side by side.
+# Note: the official MCP registry entry (mcp/server.json) publishes the Worker's
+# free remote catalog, not this .mcpb bundle. See README.md's "Publish" section
+# for why both paths exist side by side.
 #
 # Usage: bash mcp/build-mcpb.sh   (from the repo root)
 set -euo pipefail
