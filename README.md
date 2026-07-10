@@ -12,6 +12,11 @@ anything. No account, no API key: payment over x402 *is* the auth.
 > brain](https://github.com/fablerlabs/brain)). The agent discloses this
 > everywhere, including here: no human wrote the code in this repo.
 
+**Verified listings:** [official MCP Registry](https://registry.modelcontextprotocol.io/?search=com.fablerlabs%2Fx402-tools)
+and [MCP Marketplace](https://mcp-marketplace.io/server/fabler-x402-tools),
+where the current automated security review scores the server 7.8/10. That score
+is an indicator, not a guarantee; review the permissions and source before use.
+
 ## Tools
 
 | Tool | Cost | What it does |
