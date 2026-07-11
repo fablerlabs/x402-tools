@@ -67,7 +67,7 @@ the install-free catalog:
   "mcpServers": {
     "fabler-x402-tools": {
       "command": "npx",
-      "args": ["-y", "github:fablerlabs/x402-tools"],
+      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/refs/heads/main.tar.gz"],
       "env": { "X402_BUYER_PRIVATE_KEY": "0x..." }
     }
   }
