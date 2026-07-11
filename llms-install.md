@@ -50,17 +50,16 @@ project root; for Claude Desktop: `claude_desktop_config.json`; for Cline:
   "mcpServers": {
     "fabler-x402-tools": {
       "command": "npx",
-      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/refs/heads/main.tar.gz"],
-      "env": {
-        "X402_BUYER_PRIVATE_KEY": "YOUR-OWN-WALLET-KEY-OR-OMIT"
-      }
+      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz"]
     }
   }
 }
 ```
 
-If the user chose "just receive challenges" in Step 0, omit the `env` block
-entirely rather than setting it to an empty string.
+This is the safe inspect-only default from Step 0. If the user explicitly chose
+auto-pay, add an `env` block containing `X402_BUYER_PRIVATE_KEY`. Use only a
+dedicated low-balance wallet funded with what they are willing to spend on these
+tools; never use a primary wallet or one holding unrelated assets.
 
 Alternatives that behave identically:
 
@@ -89,7 +88,7 @@ npm install @x402/fetch @x402/evm viem
    printf '%s\n' \
      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' \
      '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-     | npx -y https://github.com/fablerlabs/x402-tools/archive/refs/heads/main.tar.gz
+     | npx -y https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz
    ```
 
    Expect two JSON-RPC responses; the second lists all nine `fabler_*` tools.
@@ -102,7 +101,7 @@ npm install @x402/fetch @x402/evm viem
    printf '%s\n' \
      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' \
      '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"fabler_list_products","arguments":{}}}' \
-     | npx -y https://github.com/fablerlabs/x402-tools/archive/refs/heads/main.tar.gz
+     | npx -y https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz
    ```
 
 3. If auto-pay was configured (Step 0/2): call any paid tool, e.g.

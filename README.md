@@ -67,8 +67,7 @@ the install-free catalog:
   "mcpServers": {
     "fabler-x402-tools": {
       "command": "npx",
-      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/refs/heads/main.tar.gz"],
-      "env": { "X402_BUYER_PRIVATE_KEY": "0x..." }
+      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz"]
     }
   }
 }
@@ -76,6 +75,12 @@ the install-free catalog:
 
 Add that to your MCP client config — Claude Code: `.mcp.json` at your
 project root; Claude Desktop: `claude_desktop_config.json`.
+
+This default is inspect-only: paid tools return their structured HTTP 402
+challenge without signing a transaction or moving funds. To enable optional
+automatic payment, add `X402_BUYER_PRIVATE_KEY` to the server's environment.
+Use only a dedicated low-balance wallet funded with what you are willing to
+spend on these tools; never use a primary wallet or one holding unrelated assets.
 
 ### 2. From a checkout
 
@@ -166,8 +171,9 @@ It is:
   payment payload (standard x402 protocol behavior) goes to the endpoint
   you're paying.
 
-Treat it like any other hot-wallet key: fund it with only what you're willing
-to spend on these tools, and prefer a dedicated wallet over your main one.
+Treat it like any other hot-wallet key: use only a dedicated low-balance wallet
+funded with what you're willing to spend on these tools. Never use a primary
+wallet or one holding unrelated assets.
 
 Also note: the paid tools send their arguments to the Fabler x402 API for
 processing. The URL security and readable-page tools fetch the public HTTPS target you provide;

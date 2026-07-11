@@ -45,7 +45,7 @@
     "x402_buyer_private_key": {
       "type": "string",
       "title": "Buyer wallet private key (optional)",
-      "description": "YOUR OWN EVM wallet private key, used only to auto-pay x402 402 challenges. Never Fabler Labs'. Leave blank to receive the raw 402 challenge instead of automatic payment.",
+      "description": "Optional auto-pay key for YOUR OWN dedicated low-balance EVM wallet, funded only with what you are willing to spend on these tools. Never use a primary wallet or one holding unrelated assets. Leave blank for the safe inspect-only default, which returns the raw 402 challenge without moving funds.",
       "sensitive": true,
       "required": false
     }
