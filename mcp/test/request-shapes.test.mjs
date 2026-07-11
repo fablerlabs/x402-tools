@@ -13,6 +13,7 @@
 //   UrlSecurityRequest required: [url]
 //   ScrapeRequest      required query: [url]
 //   RenderOgRequest     required: [title]  optional: subtitle, theme
+//   FundingSpreadsRequest required query: [] optional query: [symbol] (2-15 ASCII letters/digits, uppercased)
 //   GET /                                  free catalog (not /products.json)
 // Guards against regressing the 3 field/route bugs q142 found (fabler_list_products
 // hit /products.json 404; fabler_audit_agent_config sent {text} not {content,kind};
@@ -195,6 +196,62 @@ await checkAsync("fabler_list_products hits GET / (free) — not GET /products.j
   assert.equal(new URL(calls[0].url).pathname, "/");
   assert.equal(calls[0].method, "GET");
   assert.equal(calls[0].body, undefined);
+});
+
+await checkAsync("fabler_market_funding_spreads sends GET /market/funding-spreads with no query params when symbol omitted", async () => {
+  const calls = installRecordingFetch();
+  await tools.callTool("fabler_market_funding_spreads", {});
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.equal(requestUrl.pathname, "/market/funding-spreads");
+  assert.deepEqual([...requestUrl.searchParams.keys()], []);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[0].body, undefined);
+});
+
+await checkAsync("fabler_market_funding_spreads uppercase-normalizes a lowercase symbol before fetch", async () => {
+  const calls = installRecordingFetch();
+  await tools.callTool("fabler_market_funding_spreads", { symbol: "btc" });
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.equal(requestUrl.pathname, "/market/funding-spreads");
+  assert.equal(requestUrl.searchParams.get("symbol"), "BTC");
+});
+
+await checkAsync("fabler_market_funding_spreads sends exactly one encoded symbol query param and no body", async () => {
+  const calls = installRecordingFetch();
+  await tools.callTool("fabler_market_funding_spreads", { symbol: "ETH" });
+  assert.equal(calls.length, 1);
+  const requestUrl = new URL(calls[0].url);
+  assert.deepEqual([...requestUrl.searchParams.keys()], ["symbol"]);
+  assert.equal(requestUrl.searchParams.get("symbol"), "ETH");
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[0].body, undefined);
+});
+
+await checkAsync("fabler_market_funding_spreads rejects invalid symbols before fetch", async () => {
+  const invalid = [
+    null, // wrong type: null
+    42, // wrong type: number
+    ["BTC"], // wrong type: array
+    { symbol: "BTC" }, // wrong type: object
+    "B", // too short (1 char)
+    "TOOLONGSYMBOL016", // too long (16 chars)
+    "BTCUSDTPERPXXXXX", // too long (16 chars)
+    "BT€", // Unicode look-alike / non-ASCII
+    "ＢＴＣ", // fullwidth Unicode digits/letters
+    "BT-C", // punctuation
+    "BT C", // whitespace
+    "", // empty string
+  ];
+  for (const symbol of invalid) {
+    const calls = installRecordingFetch();
+    await assert.rejects(
+      () => tools.callTool("fabler_market_funding_spreads", { symbol }),
+      `invalid symbol must be rejected before fetch: ${JSON.stringify(symbol)}`,
+    );
+    assert.equal(calls.length, 0, `invalid symbol must fail before fetch: ${JSON.stringify(symbol)}`);
+  }
 });
 
 check("decodePaymentRequiredHeader decodes a v2 base64-JSON challenge", () => {

@@ -23,7 +23,7 @@
 //
 // fabler_list_products is free and never touches the payment path.
 
-const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.6" };
+const SERVER_INFO = { name: "fabler-x402-tools", version: "1.0.7" };
 const DEFAULT_PROTOCOL_VERSION = "2024-11-05";
 const RELEASE_CHECK_IDS = [
   "secrets-scanned",
@@ -260,6 +260,35 @@ const TOOLS = [
     },
   },
   {
+    name: "fabler_market_funding_spreads",
+    description:
+      "Get current perpetual-futures funding-rate spreads, gross (fees not netted out) and " +
+      "normalized across venues, sourced from each exchange's own public market-data endpoints: " +
+      "Binance, Bybit, and Hyperliquid for the top-spreads overview, plus single-symbol OKX data " +
+      "when `symbol` is given. Paid x402 tool billed in USDC on Base at a fixed $0.001 per call. " +
+      "Omit `symbol` for the top-spreads overview across all covered symbols, or supply a 2-15 " +
+      "character ASCII letters/digits symbol (e.g. \"BTC\") for that single market plus OKX. This " +
+      "is current public market data only — not investment, financial, or trading advice. Spreads " +
+      "are a point-in-time snapshot subject to exchange latency, outages, and data gaps, and the " +
+      "gross figures do not net out trading, funding, or withdrawal fees.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        symbol: {
+          type: "string",
+          minLength: 2,
+          maxLength: 15,
+          pattern: "^[A-Za-z0-9]+$",
+          description:
+            "Optional base-asset symbol, 2-15 ASCII letters/digits (e.g. \"BTC\"). Case-insensitive; " +
+            "normalized to uppercase locally before the request. Omit for the top-spreads overview " +
+            "across all covered symbols.",
+        },
+      },
+    },
+  },
+  {
     name: "fabler_list_products",
     description:
       "List Fabler Labs' x402 products with their current per-call USDC price. Free, no wallet " +
@@ -400,6 +429,17 @@ function requirePublicHttpsUrl(value) {
   return url.toString();
 }
 
+// Returns the uppercased symbol, or null when omitted. Raw ASCII letters/digits
+// only (no Unicode look-alikes, punctuation, or whitespace) — validated and
+// normalized locally so an invalid symbol never reaches fetch/payment.
+function requireOptionalSymbol(value) {
+  if (value === undefined) return null;
+  if (typeof value !== "string" || !/^[A-Za-z0-9]{2,15}$/.test(value)) {
+    throw new Error("symbol must be a string of 2-15 ASCII letters/digits");
+  }
+  return value.toUpperCase();
+}
+
 function requireReleaseResults(value) {
   if (!Array.isArray(value) || value.length < 1 || value.length > RELEASE_CHECK_IDS.length) {
     throw new Error(`results is required and must contain 1-${RELEASE_CHECK_IDS.length} checklist records`);
@@ -472,6 +512,11 @@ async function callTool(name, args) {
     if (typeof args.subtitle === "string" && args.subtitle) body.subtitle = args.subtitle;
     if (args.theme === "light" || args.theme === "dark") body.theme = args.theme;
     return JSON.stringify(await callApi("/render/og", { method: "POST", body, binary: true }), null, 2);
+  }
+  if (name === "fabler_market_funding_spreads") {
+    const symbol = requireOptionalSymbol(args.symbol);
+    const path = symbol ? `/market/funding-spreads?symbol=${encodeURIComponent(symbol)}` : "/market/funding-spreads";
+    return JSON.stringify(await callApi(path, { method: "GET" }), null, 2);
   }
   if (name === "fabler_list_products") {
     // The free, machine-readable catalog is served at the API root, not a

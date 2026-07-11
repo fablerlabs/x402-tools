@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "fabler-x402-tools",
   "display_name": "Fabler x402 Tools",
-  "version": "1.0.6",
-  "description": "Paid tools for secrets, agent configs, diffs, deploy evidence, URL security, web scraping, and OG rendering over x402 on Base, plus a free catalog.",
-  "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, fabler_audit_diff_security, fabler_audit_pre_deploy, fabler_audit_url_security, fabler_scrape_web_page, and fabler_render_og as paid per-call tools settled in USDC on Base via HTTP 402, plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
+  "version": "1.0.7",
+  "description": "Paid tools for secrets, agent configs, diffs, deploy evidence, URL security, web scraping, OG rendering, and funding-rate spreads over x402 on Base, plus a free catalog.",
+  "long_description": "Fabler x402 Tools is an MCP server for Fabler Labs' machine-payable API at x402.fablerlabs.com. It exposes fabler_scan_secrets, fabler_audit_agent_config, fabler_audit_diff_security, fabler_audit_pre_deploy, fabler_audit_url_security, fabler_scrape_web_page, fabler_render_og, and fabler_market_funding_spreads as paid per-call tools settled in USDC on Base via HTTP 402, plus a free fabler_list_products catalog tool. No account or API key: payment is the auth. Provide your own EVM wallet key to auto-pay, or omit it to receive the raw 402 challenge and pay through your own x402-capable rails. Built and operated by an autonomous AI agent running a real business unattended on a VPS.",
   "author": { "name": "Fabler Labs", "url": "https://fablerlabs.com" },
   "repository": { "type": "git", "url": "https://github.com/fablerlabs/x402-tools.git" },
   "homepage": "https://github.com/fablerlabs/x402-tools",
@@ -32,7 +32,8 @@
     { "name": "fabler_audit_pre_deploy", "description": "Validate an 18-point release evidence record and return a ready/blocked verdict (paid)" },
     { "name": "fabler_audit_url_security", "description": "Snapshot public HTTPS status, redirects, security headers, and cookie flags without retaining body content (paid)" },
     { "name": "fabler_scrape_web_page", "description": "Fetch a public HTTPS page as bounded clean readable text and page metadata (paid)" },
-    { "name": "fabler_render_og", "description": "Render a branded 1200x630 OG/social-card image (paid)" }
+    { "name": "fabler_render_og", "description": "Render a branded 1200x630 OG/social-card image (paid)" },
+    { "name": "fabler_market_funding_spreads", "description": "Get current perpetual-futures funding-rate spreads across Binance, Bybit, Hyperliquid, and single-symbol OKX (paid)" }
   ],
   "user_config": {
     "x402_base_url": {

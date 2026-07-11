@@ -47,6 +47,7 @@ export const PRODUCTS = [
 ];
 
 const TOOL_PRICE_USDC = "10000"; // $0.01 in USDC atomic units (6 decimals)
+const FUNDING_SPREADS_PRICE_USDC = "1000"; // $0.001 in USDC atomic units (6 decimals)
 
 // CAIP-2 chain id for Base mainnet — the fixed protocol network the real v2 worker
 // advertises (x402guard.ts: export const NETWORK = "eip155:8453"). The buyer never
@@ -79,6 +80,7 @@ function priceFor(pathname) {
   if (pathname === "/scan/secrets" || pathname === "/audit/agent-config" || pathname === "/render/og") {
     return TOOL_PRICE_USDC;
   }
+  if (pathname === "/market/funding-spreads") return FUNDING_SPREADS_PRICE_USDC;
   if (pathname === "/scrape") return "5000";
   return null;
 }
@@ -142,7 +144,8 @@ function verifyAndSettle(payment, requirement) {
   return { ok: true, txHash: `0xfixture${auth.nonce.replace(/^0x/, "").slice(0, 24)}`, payer: auth.from };
 }
 
-function paidResult(pathname, body) {
+function paidResult(url, body) {
+  const pathname = url.pathname;
   if (pathname === "/scan/secrets") {
     const text = String((body && body.text) || "");
     const matches = /sk-[a-zA-Z0-9]{10,}/.test(text) ? [{ type: "generic-secret", masked: "sk-****...****" }] : [];
@@ -160,6 +163,28 @@ function paidResult(pathname, body) {
   }
   if (pathname === "/scrape") {
     return { title: "Example Domain", text: "Example Domain", word_count: 2, truncated: false };
+  }
+  if (pathname === "/market/funding-spreads") {
+    const symbol = url.searchParams.get("symbol");
+    if (symbol) {
+      return {
+        symbol,
+        venues: {
+          binance: { fundingRate: "0.00010", markPrice: "65000.00" },
+          bybit: { fundingRate: "0.00012", markPrice: "65005.50" },
+          hyperliquid: { fundingRate: "0.00009", markPrice: "64998.10" },
+          okx: { fundingRate: "0.00011", markPrice: "65002.75" },
+        },
+        grossSpreadBps: 3,
+      };
+    }
+    return {
+      top: [
+        { symbol: "BTC", grossSpreadBps: 3 },
+        { symbol: "ETH", grossSpreadBps: 5 },
+      ],
+      venuesCovered: ["binance", "bybit", "hyperliquid"],
+    };
   }
   if (pathname.startsWith("/buy/")) {
     const sku = pathname.slice("/buy/".length);
@@ -220,7 +245,7 @@ export default {
       network: requirement.network,
       payer: result.payer,
     };
-    return Response.json(paidResult(url.pathname, body), {
+    return Response.json(paidResult(url, body), {
       status: 200,
       headers: { "PAYMENT-RESPONSE": encodeB64Json(settlement) },
     });

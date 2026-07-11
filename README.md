@@ -4,8 +4,8 @@
 Base.** Point any MCP client (Claude Code, Claude Desktop, ...) at this
 server to give your agent secret scanning, agent-config auditing, diff-security
 gating, pre-deploy evidence validation, public URL security snapshots, readable-page extraction,
-and OG image rendering — plus a free product catalog it can check before spending
-anything. No account, no API key: payment over x402 *is* the auth.
+OG image rendering, and perpetual-futures funding-rate spreads — plus a free product catalog it
+can check before spending anything. No account, no API key: payment over x402 *is* the auth.
 
 > **Built and operated by an autonomous AI agent.** Fabler Labs' products,
 > including this server and the API behind it, are built by a Claude agent
@@ -30,8 +30,10 @@ is an indicator, not a guarantee; review the permissions and source before use.
 | `fabler_audit_url_security` | paid | Snapshot a public HTTPS URL's status, validated redirects, security headers, and cookie flags without retaining body content. |
 | `fabler_scrape_web_page` | paid | Fetch a public HTTPS page as bounded clean readable text plus title, author, date, excerpt, word count, and redirect evidence. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image from a title/subtitle; returns the raw image bytes. |
+| `fabler_market_funding_spreads` | paid ($0.001 fixed) | Current perpetual-futures funding-rate spreads (gross, normalized across venues) from Binance, Bybit, and Hyperliquid; add a `symbol` for that single market plus OKX. Public market data only — not financial advice. |
 
-Exact per-call prices are served live by `fabler_list_products` — they are
+Every price above except `fabler_market_funding_spreads` (a fixed $0.001) is
+served live by `fabler_list_products` — they are
 not hardcoded here so this README can't go stale. See
 [x402.fablerlabs.com](https://x402.fablerlabs.com) for the human-readable
 overview, or `GET https://x402.fablerlabs.com/` for the machine-readable
@@ -55,7 +57,7 @@ for human buyers is available at [fablerlabs.com/checklist](https://fablerlabs.c
 
 ## Install
 
-Four ways to use these tools — options 1-3 expose all eight tools; option 4 is
+Four ways to use these tools — options 1-3 expose all nine tools; option 4 is
 the install-free catalog:
 
 ### 1. `npx`, straight from GitHub (no install step)
@@ -197,7 +199,7 @@ npm test
 ```
 
 Runs `mcp/test/mcp-smoke.mjs` (spawns `mcp/server.js`, performs a real
-`initialize` + `tools/list` handshake over stdio, asserts all eight tools are
+`initialize` + `tools/list` handshake over stdio, asserts all nine tools are
 present with a `description` and `inputSchema` — no network, no env vars)
 followed by `examples/buyer-sim/buyer.mjs --mock` (an offline
 challenge→pay→retry→verify simulation against every paid route — see that

@@ -6,7 +6,7 @@ step has a verification check.
 
 ## What you are installing
 
-A zero-required-dependency MCP stdio server (Node 18+) exposing eight tools:
+A zero-required-dependency MCP stdio server (Node 18+) exposing nine tools:
 
 | Tool | Cost | What it does |
 |---|---|---|
@@ -18,6 +18,7 @@ A zero-required-dependency MCP stdio server (Node 18+) exposing eight tools:
 | `fabler_audit_url_security` | paid | Snapshot public HTTPS status, redirects, security headers, and cookie flags without retaining body content. |
 | `fabler_scrape_web_page` | paid | Fetch a public HTTPS page as bounded clean readable text and page metadata. |
 | `fabler_render_og` | paid | Render a branded 1200×630 OG/social-card image. |
+| `fabler_market_funding_spreads` | paid ($0.001 fixed) | Current perpetual-futures funding-rate spreads across Binance, Bybit, Hyperliquid, plus single-symbol OKX. Public market data only, not financial advice. |
 
 The server talks to `https://x402.fablerlabs.com`, a live, already-deployed
 service — there is nothing for the user to deploy themselves (unlike a
@@ -91,7 +92,7 @@ npm install @x402/fetch @x402/evm viem
      | npx -y github:fablerlabs/x402-tools
    ```
 
-   Expect two JSON-RPC responses; the second lists all eight `fabler_*` tools.
+   Expect two JSON-RPC responses; the second lists all nine `fabler_*` tools.
 
 2. End-to-end, no wallet needed: call `fabler_list_products` from the MCP
    client. It's free and hits the live catalog — a non-empty product list is
