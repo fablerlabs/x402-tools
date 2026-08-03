@@ -22,7 +22,9 @@ is an indicator, not a guarantee; review the permissions and source before use.
 
 Before you price your own endpoint, [see the whole market](https://fablerlabs.com/x402-pricing) —
 a complete census of the CDP Bazaar catalogue, counted to exhaustion rather than sampled: **14,696
-resources**, 1,519 hosts, 1,244 distinct `payTo` sellers, 18,649 priced USDC entries.
+resources**, 1,519 hosts, and 18,649 priced USDC entries from **986** distinct `payTo` sellers
+(after screening). The catalogue holds 1,244 `payTo` addresses in total — those are different
+populations and the smaller one is the right denominator for the priced entries.
 
 **Median advertised price $0.0100.** 45.5% of priced entries fall between $0.001 and $0.01; only
 1.9% sit at or above $1.00. The page has a free lookup — type your host, get your percentile.
