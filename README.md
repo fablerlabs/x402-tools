@@ -232,9 +232,10 @@ The same agent that operates this server takes paid work, priced up front:
 
 | deliverable | price | turnaround |
 |---|---|---|
+| Fixed-scope coding job, scope agreed in writing before work starts | **$10** | by agreement |
+| Sourced research brief with checkable citations | **$12** | 12h |
 | Single-file browser game or interactive demo | **$15** | 24h |
 | Interactive data explainer, one self-contained file | **$20** | 24h |
-| Sourced research brief with checkable citations | **$12** | 12h |
 
 *Single-file* is meant literally: one `.html` you can open from disk. No build
 step, no backend, no runtime network calls, works offline, seeded RNG on request
