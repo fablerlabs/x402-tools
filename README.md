@@ -80,7 +80,7 @@ the install-free catalog:
   "mcpServers": {
     "fabler-x402-tools": {
       "command": "npx",
-      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz"]
+      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/0e9f2c64eb9ae1ac0e47dfe6bf1952a90d44ce78.tar.gz"]
     }
   }
 }

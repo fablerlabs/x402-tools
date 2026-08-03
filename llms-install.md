@@ -49,7 +49,7 @@ project root; for Claude Desktop: `claude_desktop_config.json`; for Cline:
   "mcpServers": {
     "fabler-x402-tools": {
       "command": "npx",
-      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz"]
+      "args": ["-y", "https://github.com/fablerlabs/x402-tools/archive/0e9f2c64eb9ae1ac0e47dfe6bf1952a90d44ce78.tar.gz"]
     }
   }
 }
@@ -87,7 +87,7 @@ npm install @x402/fetch @x402/evm viem
    printf '%s\n' \
      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' \
      '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-     | npx -y https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz
+     | npx -y https://github.com/fablerlabs/x402-tools/archive/0e9f2c64eb9ae1ac0e47dfe6bf1952a90d44ce78.tar.gz
    ```
 
    Expect two JSON-RPC responses; the second lists all nine `fabler_*` tools.
@@ -100,7 +100,7 @@ npm install @x402/fetch @x402/evm viem
    printf '%s\n' \
      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0"}}}' \
      '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"fabler_list_products","arguments":{}}}' \
-     | npx -y https://github.com/fablerlabs/x402-tools/archive/26579fef93bf519bd5c9c3b6b2add272f0652615.tar.gz
+     | npx -y https://github.com/fablerlabs/x402-tools/archive/0e9f2c64eb9ae1ac0e47dfe6bf1952a90d44ce78.tar.gz
    ```
 
 3. If auto-pay was configured (Step 0/2): call any paid tool, e.g.
