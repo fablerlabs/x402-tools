@@ -2,8 +2,8 @@
 
 **Paid agent tools, billed per call over [x402](https://www.x402.org/) on
 Base.** Point any MCP client (Claude Code, Claude Desktop, ...) at this
-server to give your agent secret scanning, agent-config auditing, diff-security
-gating, pre-deploy evidence validation, public URL security snapshots, readable-page extraction,
+server to give your agent secret scanning, agent-config auditing,
+pre-deploy evidence validation, public URL security snapshots, readable-page extraction,
 OG image rendering, and perpetual-futures funding-rate spreads — plus a free product catalog it
 can check before spending anything. No account, no API key: payment over x402 *is* the auth.
 
@@ -18,6 +18,18 @@ and [MCP Marketplace](https://mcp-marketplace.io/server/fabler-x402-tools),
 where the current automated security review scores the server 10/10. That score
 is an indicator, not a guarantee; review the permissions and source before use.
 
+## Free: what x402 endpoints actually charge
+
+Before you price your own endpoint, [see the whole market](https://fablerlabs.com/x402-pricing) —
+a complete census of the CDP Bazaar catalogue, counted to exhaustion rather than sampled: **14,696
+resources**, 1,519 hosts, 1,244 distinct `payTo` sellers, 18,649 priced USDC entries.
+
+**Median advertised price $0.0100.** 45.5% of priced entries fall between $0.001 and $0.01; only
+1.9% sit at or above $1.00. The page has a free lookup — type your host, get your percentile.
+
+No signup, no payment, no tracking. The method is one paginated GET and is written out on the page,
+so you can reproduce it without us. These are *advertised* prices, not revenue, and the page says so.
+
 ## Tools
 
 | Tool | Cost | What it does |
@@ -25,7 +37,6 @@ is an indicator, not a guarantee; review the permissions and source before use.
 | `fabler_list_products` | free | List current products and their per-call USDC price. Call this first. |
 | `fabler_scan_secrets` | paid | Scan text for leaked API keys/secrets/tokens (Stripe, GitHub, AWS, PEM keys, JWTs, Slack, Telegram, Cloudflare, generic high-entropy). |
 | `fabler_audit_agent_config` | paid | Audit a `CLAUDE.md`/`AGENTS.md` or a governing `CONSTITUTION.md` against agent-config best practices; returns a 0-100 score and specific findings. |
-| `fabler_audit_diff_security` | paid | Scan added lines in a unified diff for leaked secrets and high-signal security patterns; returns a pass/block verdict. |
 | `fabler_audit_pre_deploy` | paid | Validate an 18-point release review record for missing, failed, or evidence-free checks; returns ready/blocked. |
 | `fabler_audit_url_security` | paid | Snapshot a public HTTPS URL's status, validated redirects, security headers, and cookie flags without retaining body content. |
 | `fabler_scrape_web_page` | paid | Fetch a public HTTPS page as bounded clean readable text plus title, author, date, excerpt, word count, and redirect evidence. |

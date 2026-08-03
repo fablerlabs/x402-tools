@@ -14,7 +14,6 @@ const SERVER = join(root, "server.js");
 const EXPECTED_TOOLS = [
   "fabler_scan_secrets",
   "fabler_audit_agent_config",
-  "fabler_audit_diff_security",
   "fabler_audit_pre_deploy",
   "fabler_audit_url_security",
   "fabler_scrape_web_page",

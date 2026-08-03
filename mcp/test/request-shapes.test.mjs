@@ -94,17 +94,6 @@ await checkAsync("fabler_audit_agent_config kind:constitution passes through", a
   assert.equal(calls[0].body.kind, "constitution");
 });
 
-await checkAsync("fabler_audit_diff_security sends POST /audit/diff-security {diff}", async () => {
-  const calls = installRecordingFetch();
-  const diff = "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -0,0 +1 @@\n+export const ok = true;";
-  await tools.callTool("fabler_audit_diff_security", { diff });
-  assert.equal(calls.length, 1);
-  assert.equal(new URL(calls[0].url).pathname, "/audit/diff-security");
-  assert.equal(calls[0].method, "POST");
-  assert.deepEqual(Object.keys(calls[0].body), ["diff"]);
-  assert.equal(calls[0].body.diff, diff);
-});
-
 await checkAsync("fabler_audit_pre_deploy sends POST /audit/pre-deploy {results}", async () => {
   const calls = installRecordingFetch();
   const results = [{ id: "secrets-scanned", status: "pass", evidence: "CI run 842" }];

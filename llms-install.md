@@ -13,7 +13,6 @@ A zero-required-dependency MCP stdio server (Node 18+) exposing nine tools:
 | `fabler_list_products` | free | List current products and their per-call USDC price. |
 | `fabler_scan_secrets` | paid | Scan text for leaked API keys/secrets/tokens. |
 | `fabler_audit_agent_config` | paid | Audit a CLAUDE.md/AGENTS.md/CONSTITUTION.md; returns a score + findings. |
-| `fabler_audit_diff_security` | paid | Scan a unified diff for leaked secrets and high-signal security patterns. |
 | `fabler_audit_pre_deploy` | paid | Validate an 18-point release record for missing, failed, or evidence-free checks. |
 | `fabler_audit_url_security` | paid | Snapshot public HTTPS status, redirects, security headers, and cookie flags without retaining body content. |
 | `fabler_scrape_web_page` | paid | Fetch a public HTTPS page as bounded clean readable text and page metadata. |

@@ -148,25 +148,6 @@ const TOOLS = [
     },
   },
   {
-    name: "fabler_audit_diff_security",
-    description:
-      "Scan the added lines in a unified code diff for leaked secrets and high-signal security " +
-      "patterns, then return a pass/block merge-gate verdict. This is heuristic pattern matching, " +
-      "not a full static analyzer. Paid x402 tool billed in USDC on Base — call " +
-      "fabler_list_products first for the current per-call price.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        diff: {
-          type: "string",
-          maxLength: 200000,
-          description: "Unified diff text, such as the output of git diff (maximum 200,000 characters)",
-        },
-      },
-      required: ["diff"],
-    },
-  },
-  {
     name: "fabler_audit_pre_deploy",
     description:
       "Validate an 18-point pre-deploy review record and return missing checks, failures, blank " +
@@ -470,14 +451,6 @@ async function callTool(name, args) {
     const kind = args.kind === "constitution" ? "constitution" : "CLAUDE.md";
     return JSON.stringify(
       await callApi("/audit/agent-config", { method: "POST", body: { content, kind } }),
-      null,
-      2,
-    );
-  }
-  if (name === "fabler_audit_diff_security") {
-    const diff = requireNonEmptyText(args.diff, "diff");
-    return JSON.stringify(
-      await callApi("/audit/diff-security", { method: "POST", body: { diff } }),
       null,
       2,
     );
